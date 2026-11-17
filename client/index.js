@@ -223,7 +223,7 @@ function KookSettings({ form, mirror, remote, workspace }) {
       h('button', { type: 'submit', disabled: disabled || !dirty || state.revision !== revision, style: { padding: '8px 16px', cursor: 'pointer' } }, saving ? '正在保存…' : '保存设置'),
       h('button', { type: 'button', disabled: saving || importing, onClick: reset, style: { padding: '8px 16px', cursor: 'pointer' } }, '重新载入 / 放弃修改')));
 }
-exports.inject = ['slots', 'configForms', 'remote', 'remote.session', 'uiWorkspace'];
+exports.inject = ['slots', 'configForms', 'remote', 'remote.session', 'remote.agentPresets', 'uiWorkspace'];
 exports.apply = function apply(ctx) {
   ctx.slots.inject('plugins.bundle.config', () => ctx.slots.register({
     name: 'plugins.bundle.config', key: 'dsh-kook',

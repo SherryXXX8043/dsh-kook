@@ -6,7 +6,9 @@
 
 让本地 DeepSeek Harness 与 KOOK 双向对话的 Host 插件。接收消息使用 KOOK **WebSocket** 模式，发送回复使用 KOOK HTTP API；无需公网地址、Webhook 或开放入站端口。
 
-基于 [kook-client](https://github.com/zhinjs/kook-client) **1.0.5**。DSH 接口按本机 **0.2.1-rc.2** 安装包核对，包清单限制为该版本；其他 DSH 版本需要重新核对接口后调整版本范围。Node.js 22.8+，建议使用 DSH 自带运行时。
+基于 [kook-client](https://github.com/zhinjs/kook-client) **1.0.5**。0.3.3 按本机 **DSH 0.2.2-rc.3** 安装包核对，包清单限制为该版本；其他 DSH 版本需要重新核对接口后调整版本范围。Node.js 24.9+，建议使用 DSH 自带运行时。
+
+0.3.3 更新了 DSH 版本声明及 Cordis / Schemastery 依赖；会话预设改用 `agentPresets.presetForSession()` 读取；配置页补齐 `remote.agentPresets` 注入，修复预设列表读取失败。配置字段和会话路由存储格式不变。
 
 ## 能做什么
 
@@ -38,7 +40,7 @@ npm run check
 npm pack --ignore-scripts
 ```
 
-Host 源码是原生 ESM JavaScript；`npm run build` 生成 DSH 客户端配置页入口。打包得到 `dsh-kook-0.3.2.tgz`。
+Host 源码是原生 ESM JavaScript；`npm run build` 生成 DSH 客户端配置页入口。打包得到 `dsh-kook-0.3.3.tgz`。发布到 npm 后，可在安装框填写 `dsh-kook@0.3.3`；不要填写 `https://www.npmjs.com/package/dsh-kook` 网页地址。
 
 在 **DSH Web GUI → 插件 → 安装** 中填写本项目的绝对路径，例如：
 
@@ -149,9 +151,9 @@ ID 必须加引号，如 `['1234567890']`。显式 YAML 配置覆盖对应环境
 
 ## 验证范围与限制
 
-自动化测试覆盖：白名单、频道触发边界、用户隔离、重复投递、并发首条消息、恢复、持久化失败、插件卸载竞态、文本拆分、REST 错误、超时、重连，以及真实 Cordis 装载。另有使用 **实际 `kook-client` + 本机 WebSocket 服务** 的集成测试，覆盖 HELLO、原始消息、RESUME、socket error 与关闭；HTTP 请求在该测试中被 mock，不访问真实 KOOK。
+0.3.3 的自动化回归测试覆盖：新版预设服务读取、新建/恢复会话、预设变化和清空、工作目录变化、拒绝接管他人 Agent、工作区登记失败后的释放、连续消息的唯一 ID，以及真实 Cordis 4.1 装载/卸载和客户端预设 RPC 服务注入。`npm run build` 重新生成发布客户端，`npm run check` 检查 JavaScript 语法。
 
-尚未在当前运行的 DSH GUI 中安装并操作配置页，也未使用真实机器人 Token 验证 KOOK 服务端权限、实际消息投递或在完整 DSH 宿主中跑模型。客户端测试使用宿主接口与 React hooks 的替身验证配置页注册、密码字段、原子保存和清空操作；宿主测试验证配置保存后的关闭/重新连接。安装后可用私聊 `你好`、连续两条追问、`/status`、`/stop`、`/new` 及断网恢复完成联调。
+本次未在当前运行的 DSH GUI 中安装并操作配置页，也未使用真实机器人 Token 验证 KOOK 服务端权限、实际消息投递或在完整 DSH 宿主中跑模型。安装后可用私聊 `你好`、连续两条追问、`/status`、`/stop`、`/new` 及断网恢复完成联调。
 
 当前版本的边界：
 

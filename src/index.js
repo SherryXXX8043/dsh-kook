@@ -46,7 +46,7 @@ export function resolveConfig(config = {}, env = process.env) {
   return result;
 }
 
-/** Adapter for the public DSH 0.2.1-rc.2 Agent APIs. */
+/** Adapter for the public DSH 0.2.2-rc.3 Agent APIs. */
 export function createAgentAdapter(ctx, config, signal) {
   async function options() {
     const presets = ctx.get('agentPresets');
@@ -61,8 +61,7 @@ export function createAgentAdapter(ctx, config, signal) {
       meta: { cwd: config.workspace, ...(presetId ? { agentPreset: presetId } : {}) },
       setup: async (agentCtx, agent) => {
         if (agent.session.header.cwd !== config.workspace) throw new KookError('WORKSPACE_CHANGED');
-        const projectedPreset = ctx.get('sessionProjections')?.stateOf(agent.session, 'agentPreset');
-        const storedPreset = projectedPreset === undefined ? agent.session.header.agentPreset : projectedPreset ?? undefined;
+        const storedPreset = presets ? presets.presetForSession(agent.session) ?? undefined : agent.session.header.agentPreset;
         if (storedPreset !== presetId) throw new KookError('PRESET_CHANGED');
         if (presets) await step('PRESET_UNAVAILABLE', () => presets.mount(agentCtx, presetId));
       },

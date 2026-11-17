@@ -1,6 +1,6 @@
 {
   "name": "dsh-kook",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Connect local DeepSeek Harness agents to KOOK via WebSocket",
   "author": "lspbupt@sina.com",
   "license": "MIT",
@@ -14,7 +14,7 @@
   "engines": { "node": ">=24.9", "dsh": "0.2.2-rc.3" },
   "dsh": { "bundle": { "patch": "./cordis.patch.yml" }, "client": { "inject": ["@deepseek-ai/dsh-client-ui-settings", "@deepseek-ai/dsh-client-ui-plugin-manager", "@deepseek-ai/dsh-client-ui-workspace"], "platform": "web" } },
   "scripts": { "build": "node scripts/build-client.mjs", "test": "node --test --test-isolation=none test/*.test.js", "check": "node --check src/index.js && node --check src/bridge.js && node --check src/transport.js && node --check src/client.js" },
-  "dependencies": { "kook-client": "1.0.5" },
+  "dependencies": { "@kookapp/js-sdk": "0.1.4" },
   "peerDependencies": { "@deepseek-ai/cordis": "~4.1.0", "@deepseek-ai/schemastery": "~3.19.0" },
   "devDependencies": { "@deepseek-ai/cordis": "~4.1.0", "@deepseek-ai/schemastery": "~3.19.0", "ws": "^8.18.3" }
 }

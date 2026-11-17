@@ -1,10 +1,11 @@
+import { KookClient, KWSStates } from '@kookapp/js-sdk';
+
+// SDK errors can contain gateway URLs, tokens or message bodies. Report only
+// our fixed status strings; never forward SDK log arguments to the host.
 const quietLogger = Object.freeze(Object.fromEntries(
   ['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'mark'].map(key => [key, () => {}]),
 ));
-async function defaultClientFactory(config) {
-  const { Client } = await import('kook-client');
-  return new Client(config);
-}
+const defaultClientFactory = config => new KookClient(config);
 
 /** start() schedules connection without waiting for the network. */
 export class KookTransport {
@@ -19,11 +20,16 @@ export class KookTransport {
     this.failures = 0;
     this.requests = new Set();
     this.seen = new Map();
+    this.listeners = new Map();
   }
   status(value) {
     try { this.onStatus(value); } catch { /* Isolate host callbacks. */ }
   }
   start() {
+    if (this.stopping) {
+      this.restartRequested = true;
+      return;
+    }
     if (this.running) return;
     this.running = true;
     this.generation++;
@@ -35,7 +41,15 @@ export class KookTransport {
     if (!this.running || this.timer) return;
     this.timer = setTimeout(() => {
       this.timer = undefined;
-      void this.attempt();
+      if (this.connecting) {
+        this.queue(Math.max(1, this.retryBaseMs));
+      } else {
+        const pending = this.attempt();
+        this.connecting = pending;
+        void pending.finally(() => {
+          if (this.connecting === pending) this.connecting = undefined;
+        });
+      }
     }, delay);
     this.timer.unref?.();
   }
@@ -44,71 +58,75 @@ export class KookTransport {
     this.status('reconnecting');
     this.queue(Math.min(this.retryMaxMs, this.retryBaseMs * 2 ** Math.min(this.failures++, 16)));
   }
+  async disposeClient(client) {
+    if (!client) return;
+    const listeners = this.listeners.get(client) ?? [];
+    this.listeners.delete(client);
+    for (const [event, listener] of listeners) client.off(event, listener);
+    try { await client.destroy(); } catch { /* SDK errors may contain secrets. */ }
+  }
   async attempt() {
-    if (!this.running || this.connecting) return;
     const generation = this.generation;
-    this.connecting = true;
-    let failed = false;
+    let client;
+    const current = () => this.running && generation === this.generation && this.client === client;
     try {
-      if (!this.client) {
-        const client = await this.clientFactory({ token: this.token, mode: 'websocket',
-          ignore: 'bot', compress: false, autoReconnect: false,
-          handleProcessErrors: false, logLevel: 'off', timeout: this.requestTimeoutMs });
-        if (!this.running || generation !== this.generation) {
-          await client.disconnect();
-          return;
-        }
-        client.logger = quietLogger;
-        this.client = client;
-        const receiver = client.receiver;
-        // Replace cache-dependent conversion. The raw event is packet.d, not {s,d,sn}.
-        // This receiver is owned exclusively by this transport.
-        receiver.removeAllListeners('event');
-        this.eventListener = event => this.receive(event);
-        this.disconnectListener = () => {
-          if (this.connecting) this.disconnectedDuringConnect = true;
-          else this.retry();
-        };
-        receiver.on('event', this.eventListener);
-        receiver.on('disconnected', this.disconnectListener);
-      }
-      const receiver = this.client.receiver;
-      this.disconnectedDuringConnect = false;
-      // Bypass Client.connect's guild/member caches: restricted bots cannot load them.
-      if (receiver.canResume?.() && receiver.sn > 0 && !this.freshConnection) {
-        try { await receiver.reconnect(); }
-        catch { this.freshConnection = true; throw new Error('KOOK resume failed'); }
-      } else {
-        this.freshConnection = false;
-        await receiver.connect();
-      }
+      const previous = this.client;
+      this.client = undefined;
+      await this.disposeClient(previous);
       if (!this.running || generation !== this.generation) return;
-      if (this.disconnectedDuringConnect) throw new Error('KOOK disconnected during connection');
-      this.failures = 0;
-      this.status('online');
+      client = await this.clientFactory({ botToken: this.token, compression: false,
+        autoReconnect: true, logger: quietLogger, requestTimeoutMs: this.requestTimeoutMs });
+      if (!this.running || generation !== this.generation) {
+        await this.disposeClient(client);
+        return;
+      }
+      this.client = client;
+      const listeners = [
+        ['event', event => { if (current()) this.receive(event); }],
+        ['stateChange', state => {
+          if (!current()) return;
+          if (state === KWSStates.Connected) {
+            this.failures = 0;
+            this.status('online');
+          } else if (state === KWSStates.Failed) {
+            this.status('offline');
+            this.retry();
+          }
+        }],
+        ['reconnecting', () => { if (current()) this.status('reconnecting'); }],
+        ['close', () => { if (current()) this.status('offline'); }],
+        ['error', () => { if (current()) this.status('offline'); }],
+      ];
+      this.listeners.set(client, listeners);
+      for (const [event, listener] of listeners) client.on(event, listener);
+      // The SDK owns gateway negotiation, heartbeats, RESUME and reconnection.
+      await client.connect();
     } catch {
-      failed = true;
-      // Never forward SDK/axios errors: they may contain token-bearing gateway URLs.
-      if (this.running && generation === this.generation) this.status('offline');
-    } finally {
-      this.connecting = false;
-      if (generation !== this.generation && this.running) this.queue(0);
-      else if (failed && this.running) this.retry();
+      if (current() || (this.running && generation === this.generation && !client)) {
+        this.client = undefined;
+        await this.disposeClient(client);
+        if (this.running && generation === this.generation) {
+          this.status('offline');
+          this.retry();
+        }
+      }
     }
   }
   receive(event) {
     if (!this.running || !event || ![1, 9].includes(event.type)) return;
+    if (event.extra?.author?.bot || event.author_id === this.client?.me?.id) return;
     const kind = event.channel_type === 'GROUP' ? 'channel'
       : event.channel_type === 'PERSON' ? 'private' : null;
     if (!kind || typeof event.content !== 'string' || !event.msg_id || !event.author_id) return;
     const targetId = kind === 'channel' ? event.target_id : event.author_id;
     if (typeof targetId !== 'string') return;
     const id = String(event.msg_id);
-    if (this.seen.has(id)) return;
-    this.seen.set(id, true);
+    const key = `${kind}:${id}`;
+    if (this.seen.has(key)) return;
+    this.seen.set(key, true);
     if (this.seen.size > 4096) this.seen.delete(this.seen.keys().next().value);
     const message = { id, kind, targetId, authorId: String(event.author_id),
-      text: event.content, isBot: Boolean(event.extra?.author?.bot) };
+      text: event.content, isBot: false };
     try { Promise.resolve(this.onMessage(message)).catch(() => {}); } catch { /* isolated */ }
   }
   async send(target, text) {
@@ -127,13 +145,15 @@ export class KookTransport {
         controller.signal.addEventListener('abort', abortListener, { once: true });
         timer = setTimeout(() => controller.abort(), this.requestTimeoutMs);
       });
-      const request = this.client.request.post(
-        target.kind === 'channel' ? '/v3/message/create' : '/v3/direct-message/create',
-        { target_id: target.targetId, type: 1, content: text },
-        { timeout: this.requestTimeoutMs, signal: controller.signal },
+      // Use the public raw request API to cancel rate-limit waits and HTTP I/O,
+      // and disable POST retries (a lost response may already have been sent).
+      const request = this.client.api.request(
+        target.kind === 'channel' ? '/api/v3/message/create' : '/api/v3/direct-message/create',
+        'POST', { target_id: target.targetId, type: 1, content: text }, false,
+        { timeoutMs: this.requestTimeoutMs, signal: controller.signal, retryOnRateLimit: false },
       );
       const result = await Promise.race([request, cancelled]);
-      if (result?.code !== 0) throw new Error('KOOK rejected message');
+      if (!result?.success || result.code !== 0) throw new Error('KOOK rejected message');
       return result.data;
     } catch {
       throw new Error('KOOK message delivery failed');
@@ -143,7 +163,9 @@ export class KookTransport {
       this.requests.delete(controller);
     }
   }
-  async stop() {
+  stop() {
+    this.restartRequested = false;
+    if (this.stopping) return this.stopping;
     this.running = false;
     this.generation++;
     clearTimeout(this.timer);
@@ -151,12 +173,22 @@ export class KookTransport {
     for (const controller of this.requests) controller.abort();
     const client = this.client;
     this.client = undefined;
-    if (client) {
-      client.receiver.off('event', this.eventListener);
-      client.receiver.off('disconnected', this.disconnectListener);
-      try { await client.disconnect(); } catch { /* Errors may contain secrets. */ }
-    }
+    const connecting = this.connecting;
     this.seen.clear();
     this.status('stopped');
+    const pending = (async () => {
+      await this.disposeClient(client);
+      await connecting;
+    })();
+    this.stopping = pending;
+    void pending.finally(() => {
+      if (this.stopping !== pending) return;
+      this.stopping = undefined;
+      if (this.restartRequested) {
+        this.restartRequested = false;
+        this.start();
+      }
+    });
+    return pending;
   }
 }

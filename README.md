@@ -6,7 +6,9 @@
 
 让本地 DeepSeek Harness 与 KOOK 双向对话的 Host 插件。接收消息使用 KOOK **WebSocket** 模式，发送回复使用 KOOK HTTP API；无需公网地址、Webhook 或开放入站端口。
 
-基于 [kook-client](https://github.com/zhinjs/kook-client) **1.0.5**。0.3.3 按本机 **DSH 0.2.2-rc.3** 安装包核对，包清单限制为该版本；其他 DSH 版本需要重新核对接口后调整版本范围。Node.js 24.9+，建议使用 DSH 自带运行时。
+基于 KOOK 官方 SDK [@kookapp/js-sdk](https://github.com/kaiheila/js-bot) **0.1.4**。DSH 接口沿用 0.3.3 对本机 **DSH 0.2.2-rc.3** 安装包的核对，包清单限制为该版本；其他 DSH 版本需要重新核对接口后调整版本范围。Node.js 24.9+，建议使用 DSH 自带运行时。
+
+0.3.4 将通信层迁移到官方 SDK：使用公开的连接、事件及 REST 接口，由 SDK 管理心跳、消息序号和断线恢复；卸载时销毁客户端并取消待发送请求。Token、配置字段和会话路由存储格式不变。
 
 0.3.3 更新了 DSH 版本声明及 Cordis / Schemastery 依赖；会话预设改用 `agentPresets.presetForSession()` 读取；配置页补齐 `remote.agentPresets` 注入，修复预设列表读取失败。配置字段和会话路由存储格式不变。
 
@@ -40,7 +42,7 @@ npm run check
 npm pack --ignore-scripts
 ```
 
-Host 源码是原生 ESM JavaScript；`npm run build` 生成 DSH 客户端配置页入口。打包得到 `dsh-kook-0.3.3.tgz`。发布到 npm 后，可在安装框填写 `dsh-kook@0.3.3`；不要填写 `https://www.npmjs.com/package/dsh-kook` 网页地址。
+Host 源码是原生 ESM JavaScript；`npm run build` 生成 DSH 客户端配置页入口。打包得到 `dsh-kook-0.3.4.tgz`。发布到 npm 后，可在安装框填写 `dsh-kook@0.3.4`；不要填写 `https://www.npmjs.com/package/dsh-kook` 网页地址。
 
 在 **DSH Web GUI → 插件 → 安装** 中填写本项目的绝对路径，例如：
 
@@ -153,6 +155,8 @@ ID 必须加引号，如 `['1234567890']`。显式 YAML 配置覆盖对应环境
 
 0.3.3 的自动化回归测试覆盖：新版预设服务读取、新建/恢复会话、预设变化和清空、工作目录变化、拒绝接管他人 Agent、工作区登记失败后的释放、连续消息的唯一 ID，以及真实 Cordis 4.1 装载/卸载和客户端预设 RPC 服务注入。`npm run build` 重新生成发布客户端，`npm run check` 检查 JavaScript 语法。
 
+0.3.4 增加真实官方 SDK + 本地 HTTP/WebSocket 服务集成测试，覆盖认证和 HELLO、心跳、群聊/私信收发、非文本及机器人过滤、去重、断线 RESUME、初次认证失败恢复、HTTP/API/JSON 错误、429 不重试、超时和卸载取消。另有生命周期测试覆盖延迟创建、初始重试、停止/重启竞态和敏感错误屏蔽；所有测试均不访问真实 KOOK。
+
 本次未在当前运行的 DSH GUI 中安装并操作配置页，也未使用真实机器人 Token 验证 KOOK 服务端权限、实际消息投递或在完整 DSH 宿主中跑模型。安装后可用私聊 `你好`、连续两条追问、`/status`、`/stop`、`/new` 及断网恢复完成联调。
 
 当前版本的边界：
@@ -174,6 +178,6 @@ ID 必须加引号，如 `['1234567890']`。显式 YAML 配置覆盖对应环境
 - `src/transport.js`：KOOK SDK WebSocket 与 REST 适配。
 - `src/store.js`：只存会话 ID 的原子路由文件。
 
-SDK 1.0.5 的 README 与实现存在差异：缓存型发送接口可能拒绝尚未加载的用户/频道，消息转换还依赖缓存。适配层直接订阅 receiver 原始事件、通过 SDK 的 HTTP 实例发消息，并绕过全量成员缓存初始化；关闭 SDK 全局错误处理和正文日志，重连由插件控制。使用 SDK 非顶层 receiver API，因此依赖固定版本，升级前必须运行 SDK 集成测试。
+通信层使用 `@kookapp/js-sdk` 的 `KookClient.connect()`、顶层 `event` / `stateChange` / `reconnecting` 事件和 `destroy()`。心跳、序号排序与 RESUME 由 SDK 管理；初始连接失败后适配器销毁客户端并指数退避重试。发送使用公开的 `client.api.request()`，以传入取消信号、超时及 `retryOnRateLimit: false`，避免失败后重复发帖。SDK 原始日志被关闭，仅输出固定的连接状态，不记录 Token、网关 URL 或消息正文。SDK 固定为 0.1.4，升级前运行本地集成测试。
 
-参考：[KOOK 文档](https://developer.kookapp.cn/)、[WebSocket 协议](https://developer.kookapp.cn/doc/websocket)、[kook-client 源码](https://github.com/zhinjs/kook-client)。
+参考：[KOOK 文档](https://developer.kookapp.cn/)、[WebSocket 协议](https://developer.kookapp.cn/doc/websocket)、[官方 SDK 源码](https://github.com/kaiheila/js-bot)。

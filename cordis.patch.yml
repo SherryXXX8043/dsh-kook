@@ -1,0 +1,4 @@
+- insert:
+    - id: kook
+      name: dsh-kook
+      config: {}

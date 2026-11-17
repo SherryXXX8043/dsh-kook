@@ -1,0 +1,28 @@
+# 合并到当前 DSH profile 的 cordis.patch.yml（不要覆盖其他条目）。
+# config 是整个对象替换，修改时保留需要的字段。
+- id: kook
+  name: dsh-kook
+  config:
+    # 正常使用请在插件界面的密码字段填写，避免把真实 Token 提交到 Git。
+    token: ''
+    # tokenEnv: KOOK_BOT_TOKEN  # 仅未设置 token 时使用
+    workspace: 'C:/Projects/my-project'
+    allowedUsers:
+      - '1234567890'
+    allowedChannels:
+      - '9876543210'
+    allowPrivate: true
+    autoForwardChannels: false
+    pairingEnabled: false
+    ownerUserId: '1234567890'
+    personality: '你是一个耐心、简洁、诚实的助手。'
+    memoryFile: .dsh-kook/memories.json
+    memoryLimit: 8
+    memoryHalfLifeMonths: 6
+    knowledgeFile: 'C:/Projects/my-project/knowledge.txt'
+    knowledgeLimit: 5
+    commandPrefix: /dsh
+    stateFile: .dsh-kook/routes.json
+    # agentPreset: standard
+    # provider: deepseek
+    # model: deepseek-chat

@@ -1,0 +1,15 @@
+{
+  "name": "dsh-kook",
+  "version": "0.3.2",
+  "description": "Connect local DeepSeek Harness agents to KOOK via WebSocket",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": { ".": "./src/index.js", "./client": "./src/client.js", "./package.json": "./package.json", "./cordis.patch.yml": "./cordis.patch.yml" },
+  "files": ["src", "client", "scripts/build-client.mjs", "cordis.patch.yml", "README.md", "examples"],
+  "engines": { "node": ">=22.8", "dsh": "0.2.1-rc.2" },
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" }, "client": { "inject": ["@deepseek-ai/dsh-client-ui-settings", "@deepseek-ai/dsh-client-ui-plugin-manager", "@deepseek-ai/dsh-client-ui-workspace"], "platform": "web" } },
+  "scripts": { "build": "node scripts/build-client.mjs", "test": "node --test --test-isolation=none test/*.test.js", "check": "node --check src/index.js && node --check src/bridge.js && node --check src/transport.js && node --check src/client.js" },
+  "dependencies": { "kook-client": "1.0.5" },
+  "peerDependencies": { "@deepseek-ai/cordis": "~4.0.5", "@deepseek-ai/schemastery": "~3.18.5" },
+  "devDependencies": { "@deepseek-ai/cordis": "~4.0.5", "@deepseek-ai/schemastery": "~3.18.5", "ws": "^8.18.3" }
+}

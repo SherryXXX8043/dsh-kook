@@ -1,5 +1,9 @@
 # DSH KOOK
 
+[源码仓库](https://github.com/kaiheila/dsh-kook) · [使用说明](https://github.com/kaiheila/dsh-kook#readme) · [MIT 许可证](./LICENSE)
+
+作者：<lspbupt@sina.com>。本项目采用 MIT 许可证，允许商用、修改和再分发，须保留版权及许可声明；完整条款见 [LICENSE](./LICENSE)。
+
 让本地 DeepSeek Harness 与 KOOK 双向对话的 Host 插件。接收消息使用 KOOK **WebSocket** 模式，发送回复使用 KOOK HTTP API；无需公网地址、Webhook 或开放入站端口。
 
 基于 [kook-client](https://github.com/zhinjs/kook-client) **1.0.5**。DSH 接口按本机 **0.2.1-rc.2** 安装包核对，包清单限制为该版本；其他 DSH 版本需要重新核对接口后调整版本范围。Node.js 22.8+，建议使用 DSH 自带运行时。

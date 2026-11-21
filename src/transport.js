@@ -129,7 +129,11 @@ export class KookTransport {
     const card = event.type === 10 ? parseImageCard(event.content) : undefined;
     if (event.type === 10 && !card) return;
     const attachment = event.extra?.attachments;
+    const botId = this.client?.me?.id;
+    const mentionedBot = kind === 'channel' && typeof botId === 'string' && /^\d+$/.test(botId) &&
+      Array.isArray(event.extra?.mention) && event.extra.mention.includes(botId);
     const message = { id, kind, targetId, authorId: String(event.author_id),
+      ...(mentionedBot ? { mentionedBot: true, botId } : {}),
       text: card?.text ?? (event.type === 2 ? '' : event.content), isBot: false,
       ...(card ? { images: card.images } : event.type === 2 ? { images: [{
         url: typeof attachment?.url === 'string' && attachment.url ? attachment.url : event.content,

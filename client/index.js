@@ -7,7 +7,8 @@ const fields = [
   ['allowedUsers', '允许的用户 ID', 'array', '必填；每行一个 ID，也可用逗号分隔。只有这些用户能调用机器人。'],
   ['allowedChannels', '允许的频道 ID', 'array', '每行一个 ID，也可用逗号分隔。留空禁用频道消息，私聊由下方开关控制。'],
   ['allowPrivate', '允许私聊', 'checkbox', '私聊仍受用户白名单限制。'],
-      ['autoForwardChannels', '自动转发频道消息', 'checkbox', '开启后，白名单频道中的普通消息会自动进入 DSH；关闭时频道需使用命令前缀。'],
+  ['mentionWakeup', '@机器人唤醒', 'checkbox', '开启后，在白名单频道中直接 @机器人并发送正文即可对话；仅识别实际选择的当前机器人，不响应 @所有人或 @角色。关闭此项不影响已开启的自动转发。'],
+      ['autoForwardChannels', '自动转发频道消息', 'checkbox', '开启后，白名单频道中的普通消息会自动进入 DSH；关闭时可使用命令前缀，或在启用 @机器人唤醒后直接 @机器人对话。'],
       ['pairingEnabled', '陌生人配对审批', 'checkbox', '陌生人私聊先收到配对码，主人批准后才能使用。'],
       ['ownerUserId', '主人 KOOK 用户 ID', 'text', '用于接收陌生人配对请求和批准通知。'],
       ['personality', '机器人性格设定', 'textarea', '描述长期人格、语气、边界和回答风格。'],
@@ -23,7 +24,7 @@ const fields = [
   ['model', '模型', 'select', '保存后的模型选择会用于新会话和恢复的旧会话；显式指定模型时使用该模型默认推理等级。'],
   ['tokenEnv', 'Token 环境变量（兼容）', 'text', '仅未填写 Bot Token 时使用。变量应在 DSH 启动前设置。'],
 ];
-const defaults = { token: '', workspace: '', allowedUsers: [], allowedChannels: [], allowPrivate: true, autoForwardChannels: false, pairingEnabled: false, ownerUserId: '', personality: '', memoryFile: '.dsh-kook/memories.json', memoryLimit: 8, memoryHalfLifeMonths: 6, knowledgeFile: '', knowledgeText: '', knowledgeName: '', knowledgeLimit: 5, commandPrefix: '/dsh', stateFile: '.dsh-kook/routes.json', agentPreset: '', provider: '', model: '', tokenEnv: 'KOOK_BOT_TOKEN' };
+const defaults = { token: '', workspace: '', allowedUsers: [], allowedChannels: [], allowPrivate: true, mentionWakeup: true, autoForwardChannels: false, pairingEnabled: false, ownerUserId: '', personality: '', memoryFile: '.dsh-kook/memories.json', memoryLimit: 8, memoryHalfLifeMonths: 6, knowledgeFile: '', knowledgeText: '', knowledgeName: '', knowledgeLimit: 5, commandPrefix: '/dsh', stateFile: '.dsh-kook/routes.json', agentPreset: '', provider: '', model: '', tokenEnv: 'KOOK_BOT_TOKEN' };
 function toDraft(value = {}) {
   return { knowledgeText: value.knowledgeText ?? '', knowledgeName: value.knowledgeName ?? '', ...Object.fromEntries(fields.map(([key, , type]) => {
     const v = key === 'token' ? '' : value[key] ?? defaults[key];
@@ -272,7 +273,7 @@ function KookSettings({ form, mirror, remote, workspace, locale, t = (text, para
           h('button', { type: 'button', disabled, onClick: () => { setTokenAction('environment'); setDraft(previous => ({ ...previous, token: '' })); setDirty(true); setNotice(''); } }, t('改用环境变量')))),
       tokenAction !== 'keep' && !draft.token && h('p', { role: 'status', className: 'kook-note kook-warning' }, t(tokenAction === 'disable' ? '保存后清除 Token 并停止连接。' : '保存后移除 Token 覆盖，使用环境变量。')))),
     section('访问权限', h(React.Fragment, null,
-      ...renderFields(['allowedUsers', 'allowedChannels', 'allowPrivate', 'autoForwardChannels']),
+      ...renderFields(['allowedUsers', 'allowedChannels', 'allowPrivate', 'mentionWakeup', 'autoForwardChannels']),
       h('div', { style: { marginTop: 16 } }, ...renderFields(['commandPrefix'])))),
     section('模型与对话', h(React.Fragment, null,
       h('div', { className: 'kook-grid' }, ...renderFields(['provider', 'model'])),
@@ -282,8 +283,11 @@ function KookSettings({ form, mirror, remote, workspace, locale, t = (text, para
       catalog.presetError && h('p', { role: 'status', className: 'kook-note kook-warning' }, t('预设列表不可用，请检查 DSH 预设服务。')),
       h('button', { type: 'button', disabled: catalog.loading || disabled, onClick: loadOptions }, t('刷新可选项')))),
     folded('图片使用', h(React.Fragment, null,
-      h('p', null, t('私聊可直接发图。要指定问题，先发送 /image <问题>，再在两分钟内发图。')),
-      h('p', null, t('频道关闭自动转发时，先发送以下命令，再由同一账号在同一频道发图：')),
+      h('p', null, t('在同一条消息中实际 @机器人、添加图片并填写问题即可识图；无需先发 /image。请选择机器人账号，非同名角色。')),
+      h('p', null, t('也可只 @机器人并附图，不填写问题；机器人会结合上下文查看图片，没有其他问题时简要描述。')),
+      h('p', null, t('同条图片消息中的问题优先使用；即使同时写 /image <问题>，也会直接处理当前图片，不再等待下一张。')),
+      h('p', null, t('私聊可直接发送图片和问题，不需要 @；也可先发送 /image <问题>，再在两分钟内发图。')),
+      h('p', null, t('分开两次发送时，请先实际选择机器人并发送 @机器人 /image <问题>，再由同一账号在同一频道于两分钟内发图；也可使用以下命令前缀：')),
       h('p', { className: 'kook-note' }, h('code', null, t('{prefix} /image 请分析这张截图。', { prefix }))),
       h('p', { className: 'kook-hint' }, t('看图需要支持图片的模型。支持 PNG、JPEG、WebP、GIF，单张最多 8 MiB，并受 DSH 图片限制。')),
       h('p', null, t('需要图片回复时，可以要求机器人把工作目录内已有的图片发到当前聊天。')))),

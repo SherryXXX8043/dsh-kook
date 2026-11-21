@@ -28,6 +28,16 @@ export class KookBridge {
     this.stopped = false;
     this.pendingCount = 0;
   }
+  currentHandle(key) {
+    const handle = this.handles.get(key);
+    if (handle?.isCurrent && !handle.isCurrent()) {
+      this.handles.delete(key);
+      this.destinations.delete(handle.agent.id);
+      this.sessionUsers.delete(handle.agent.id);
+      return undefined;
+    }
+    return handle;
+  }
   parse(message) {
     const { kind, targetId, authorId, text } = message;
     if (this.stopped || message.isBot || !message.id || !authorId || !targetId || typeof text !== 'string') return;
@@ -38,10 +48,12 @@ export class KookBridge {
       return { key: `pair:${authorId}`, destination: { kind, targetId }, prompt: text.trim(), pairing: true, authorId };
     }
     const images = Array.isArray(message.images) ? message.images.map(image => ({ ...image })) : [];
-    let prompt = text.trim();
+    const mentioned = kind === 'channel' && this.config.mentionWakeup !== false &&
+      message.mentionedBot === true && typeof message.botId === 'string' && /^\d+$/.test(message.botId);
+    let prompt = mentioned ? text.split(`(met)${message.botId}(met)`).join('').trim() : text.trim();
     const prefix = this.config.commandPrefix;
     const prefixed = prompt === prefix || (prompt.startsWith(prefix) && /^\s/.test(prompt.slice(prefix.length)));
-    const needsImageRequest = kind === 'channel' && !prefixed && !this.config.autoForwardChannels;
+    const needsImageRequest = kind === 'channel' && !prefixed && !mentioned && !this.config.autoForwardChannels;
     if (needsImageRequest && !images.length) return;
     if (prefixed) prompt = prompt.slice(prefix.length).trim();
     if (Buffer.byteLength(prompt) > 16000) return;
@@ -89,7 +101,9 @@ export class KookBridge {
       this.imageRequests.delete(key);
       const armed = pending?.expiresAt > Date.now();
       if (needsImageRequest && !armed) return;
-      if (armed) prompt = pending.prompt;
+      // A caption on this exact image is authoritative; a prior /image prompt only fills an empty caption.
+      if (armed && !prompt) prompt = pending.prompt;
+      if (prompt === '/image' || prompt.startsWith('/image ')) prompt = prompt.slice(6).trim();
       prompt ||= '请根据上下文查看这张图片；没有其他问题时，请简要描述图片内容。';
     }
     if (pairing) {
@@ -99,7 +113,8 @@ export class KookBridge {
       return this.reply({ kind: 'private', targetId: this.config.ownerUserId }, `收到新的 KOOK 配对请求：用户 ${authorId}，配对码 ${request.code}。批准请发送 /approve ${request.code}。`);
     }
     if (!hasImages && (!prompt || prompt === '/help')) {
-      return this.reply(destination, `直接发送文字或图片与 DSH 对话（看图需要支持图片的模型）。频道内使用 ${this.config.commandPrefix} <文字>。\n频道未开启自动转发时，先发 ${this.config.commandPrefix} /image <问题>，再在两分钟内发一张图。\n/help 帮助 · /image <问题> 接收下一张图 · /status 会话 · /stop 停止 · /new 新会话\n需要收图时可说“把工作目录中的某张图片发给我”。\n审批和交互问题请在本地 DSH 完成。`);
+      const mentionHelp = this.config.mentionWakeup !== false ? '也可在频道中 @机器人 后发送正文或 /status、/stop 等命令。同一条消息可 @机器人、附图并填写问题，直接识图（请选择机器人账号，不是同名角色）。\n' : '';
+      return this.reply(destination, `直接发送文字或图片与 DSH 对话（看图需要支持图片的模型）。频道内使用 ${this.config.commandPrefix} <文字>。\n${mentionHelp}频道未开启自动转发时，先发 ${this.config.commandPrefix} /image <问题>${this.config.mentionWakeup !== false ? '（或 @机器人 /image <问题>）' : ''}，再在两分钟内发一张图。\n/help 帮助 · /image <问题> 接收下一张图 · /status 会话 · /stop 停止 · /new 新会话\n需要收图时可说“把工作目录中的某张图片发给我”。\n审批和交互问题请在本地 DSH 完成。`);
     }
     if (!hasImages && (prompt === '/image' || prompt.startsWith('/image '))) {
       for (const [route, request] of this.imageRequests) if (request.expiresAt <= Date.now()) this.imageRequests.delete(route);
@@ -113,7 +128,7 @@ export class KookBridge {
     }
     if (!hasImages && prompt === '/stop') {
       this.imageRequests.delete(key);
-      this.handles.get(key)?.agent.cancel({ kind: 'user' });
+      this.currentHandle(key)?.agent.cancel({ kind: 'user' });
       return this.reply(destination, '已停止当前已加载会话的任务。');
     }
     if (!hasImages && prompt === '/new') {
@@ -129,12 +144,12 @@ export class KookBridge {
       }
       return this.reply(destination, '下一条消息将创建新会话；旧记录保留在 DSH。');
     }
-    if (prompt.startsWith('/approve ') && this.config.ownerUserId) {
+    if (!hasImages && prompt.startsWith('/approve ') && this.config.ownerUserId) {
       if (destination.kind !== 'private' || destination.targetId !== this.config.ownerUserId) return this.reply(destination, '只有主人可以批准配对。');
       const approved = await step('PAIRING_SAVE', () => this.companion?.approve(prompt.slice(9).trim()));
       return this.reply(destination, approved ? `已批准用户 ${approved}，对方可以开始与 DSH 对话。` : '配对码无效或已使用。');
     }
-    if (prompt === '/memory') {
+    if (!hasImages && prompt === '/memory') {
       const memories = await step('MEMORY_READ', () => this.companion?.recall(authorId ?? '', '', 20, this.config.memoryHalfLifeMonths));
       return this.reply(destination, memories?.length ? memories.map(item => `- ${item.text}`).join('\n') : '当前没有已保存的长期记忆。');
     }
@@ -151,13 +166,18 @@ export class KookBridge {
       }
       if (this.stopped) return;
     }
-    let handle = this.handles.get(key);
+    let handle = this.currentHandle(key);
     if (!handle) {
       const existingId = this.store.get(key);
       const id = existingId ?? `session-${randomUUID()}`;
+      if ([...this.handles.entries()].some(([route, current]) => route !== key && current.agent.id === id)) throw new KookError('SESSION_OWNED');
       if (this.handles.size >= 100) throw new KookError('SESSION_LIMIT');
       handle = await step(existingId ? 'SESSION_RESUME' : 'SESSION_CREATE', () => existingId ? this.agents.resume(id) : this.agents.create(id));
       if (this.stopped || imageController?.signal.aborted) { await handle.dispose(); return; }
+      if ([...this.handles.entries()].some(([route, current]) => route !== key && current.agent.id === handle.agent.id)) {
+        if (handle.borrowed) await handle.dispose();
+        throw new KookError('SESSION_OWNED');
+      }
       try { if (!existingId) await step('ROUTE_SAVE', () => this.store.set(key, id)); }
       catch (error) { await handle.dispose(); throw error; }
       this.handles.set(key, handle);
@@ -180,12 +200,15 @@ export class KookBridge {
     if (this.stopped || imageController?.signal.aborted) return;
     const content = [{ type: 'text', text: modelPrompt }, ...imageBlocks].map(block => Object.freeze(block));
     const message = Object.freeze({ id: randomUUID(), role: 'user', content: Object.freeze(content), source: Object.freeze({ kind: 'user' }) });
+    if (handle.isCurrent && !handle.isCurrent()) throw new KookError('SESSION_OWNED');
     await step('MESSAGE_SUBMIT', () => handle.agent.followup(message));
   }
   /** Called only for live committed events; history is never replayed to KOOK. */
   onSessionEvent(session, event) {
     const destination = this.destinations.get(session.id);
     if (!destination || this.stopped) return;
+    const handles = [...this.handles.values()].filter(handle => handle.agent.id === session.id);
+    if (handles.some(handle => handle.isCurrent && (!handle.isCurrent() || handle.agent.session !== session))) return;
     if (event.type === 'assistant/message' && !event.data.interrupted) {
       const text = event.data.message.content.filter(block => block.type === 'text').map(block => block.text).join('\n');
       if (text.trim()) {

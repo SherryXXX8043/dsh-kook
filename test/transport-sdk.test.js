@@ -164,6 +164,24 @@ test('official raw events normalize group/private text and images and reject bot
     images: [{ url: 'https://img.kookapp.cn/private.png', name: undefined }] });
 });
 
+test('official SDK forwards explicit current bot mentions separately from all roles and textual tags', { timeout: 5000 }, async t => {
+  const f = await fixture(t);
+  // Model the numeric identity returned by the real /user/me endpoint.
+  f.clients[0]._me.id = '9001';
+  const extra = mention => ({ author: { bot: false }, mention });
+  f.sendEvent(1, event('direct-mention', { type: 9, content: '(met)9001(met) hello', extra: extra(['9001']) }));
+  f.sendEvent(2, event('fake-tag', { type: 9, content: '(met)9001(met) hello', extra: extra([]) }));
+  f.sendEvent(3, event('broadcast', { type: 9, content: '(met)all(met) hello',
+    extra: { ...extra([]), mention_all: true, mention_here: true, mention_roles: [9001] } }));
+  f.sendEvent(4, event('other-bot', { type: 9, content: '(met)9002(met) hello', extra: extra(['9002']) }));
+  f.sendEvent(5, event('last'));
+  await until(() => f.messages.some(m => m.id === 'last'), 'mention metadata frames');
+  assert.equal(f.messages[0].mentionedBot, true);
+  assert.equal(f.messages[0].botId, '9001');
+  assert.equal(f.messages[0].text, '(met)9001(met) hello');
+  for (const message of f.messages.slice(1)) assert.equal(message.mentionedBot, undefined, message.id);
+});
+
 test('official REST sends exact group and private endpoints and payloads', { timeout: 5000 }, async t => {
   const f = await fixture(t);
   for (const kind of ['channel', 'private']) {

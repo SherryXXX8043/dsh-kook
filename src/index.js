@@ -26,7 +26,7 @@ export function resolveConfig(config = {}, env = process.env) {
   const result = {
     tokenEnv: 'KOOK_BOT_TOKEN', workspace: env.KOOK_WORKSPACE ?? '',
     allowedUsers: csv(env.KOOK_ALLOWED_USERS), allowedChannels: csv(env.KOOK_ALLOWED_CHANNELS),
-    allowPrivate: true, autoForwardChannels: false, pairingEnabled: false, ownerUserId: '', personality: '', memoryFile: '.dsh-kook/memories.json', memoryLimit: 8, memoryHalfLifeMonths: 6, knowledgeFile: '', knowledgeText: '', knowledgeName: '', knowledgeLimit: 5, commandPrefix: '/dsh', stateFile: '.dsh-kook/routes.json',
+    allowPrivate: true, autoForwardChannels: false, mentionWakeup: true, pairingEnabled: false, ownerUserId: '', personality: '', memoryFile: '.dsh-kook/memories.json', memoryLimit: 8, memoryHalfLifeMonths: 6, knowledgeFile: '', knowledgeText: '', knowledgeName: '', knowledgeLimit: 5, commandPrefix: '/dsh', stateFile: '.dsh-kook/routes.json',
     ...Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined)),
   };
   if (!result.workspace || !isAbsolute(result.workspace)) throw new Error('KOOK workspace must be an absolute path (config.workspace or KOOK_WORKSPACE)');
@@ -37,6 +37,7 @@ export function resolveConfig(config = {}, env = process.env) {
   if (typeof result.commandPrefix !== 'string' || !result.commandPrefix.trim() || /\s/.test(result.commandPrefix)) throw new Error('commandPrefix must be a nonempty word');
   if (Boolean(result.provider) !== Boolean(result.model)) throw new Error('provider and model must be configured together');
   if (typeof result.stateFile !== 'string' || !result.stateFile) throw new Error('stateFile must be a nonempty path');
+  if (typeof result.mentionWakeup !== 'boolean') throw new Error('mentionWakeup must be boolean');
   if (typeof result.allowPrivate !== 'boolean' || typeof result.autoForwardChannels !== 'boolean' || typeof result.pairingEnabled !== 'boolean') throw new Error('allowPrivate, autoForwardChannels and pairingEnabled must be boolean');
    if (result.pairingEnabled && (!/^\d+$/.test(result.ownerUserId) || !result.ownerUserId)) throw new Error('ownerUserId must be set when pairing is enabled');
    if (!Number.isSafeInteger(result.memoryLimit) || result.memoryLimit < 0 || !Number.isSafeInteger(result.memoryHalfLifeMonths) || result.memoryHalfLifeMonths <= 0 || !Number.isSafeInteger(result.knowledgeLimit) || result.knowledgeLimit < 0) throw new Error('Invalid memory or knowledge limits');
@@ -88,14 +89,41 @@ export function createAgentAdapter(ctx, config, signal) {
     try { await attach(handle.agent.id); return handle; }
     catch (error) { await handle.dispose(); throw error; }
   }
+  async function borrow(agent, sessionId) {
+    signal?.throwIfAborted();
+    if (agent.id !== sessionId || !agent.session?.header || agent.session.header.origin === 'subagent') throw new KookError('SESSION_OWNED');
+    if (agent.session.header.cwd !== config.workspace) throw new KookError('WORKSPACE_CHANGED');
+    const presets = ctx.get('agentPresets');
+    const requested = config.agentPreset?.trim() || undefined;
+    if (requested && !presets) throw new KookError('PRESET_UNAVAILABLE');
+    const presetId = presets ? (await step('PRESET_UNAVAILABLE', () => presets.resolve(requested))).id : undefined;
+    const storedPreset = presets ? presets.presetForSession(agent.session) ?? undefined : agent.session.header.agentPreset;
+    if (storedPreset !== presetId) throw new KookError('PRESET_CHANGED');
+    if (ctx.agents.get(sessionId) !== agent) throw new KookError('SESSION_OWNED');
+    await attach(sessionId);
+    signal?.throwIfAborted();
+    if (ctx.agents.get(sessionId) !== agent) throw new KookError('SESSION_OWNED');
+    // The UI or another Host owner keeps this Agent alive. Never reconfigure or dispose it.
+    return { agent, borrowed: true, isCurrent: () => !signal?.aborted && ctx.agents.get(sessionId) === agent,
+      dispose: async () => {} };
+  }
   return {
     attach,
     async create(sessionId) { return register(await ctx.agents.create({ sessionId, ...await options() })); },
     async resume(resumeSessionId) {
-      // Only our own handle can dispose a session. Never adopt someone else's live agent.
-      if (ctx.agents.get(resumeSessionId)) throw new KookError('SESSION_OWNED');
+      const live = ctx.agents.get(resumeSessionId);
+      if (live) return borrow(live, resumeSessionId);
       const { meta, ...opts } = await options();
-      return register(await ctx.agents.resume({ resumeSessionId, ...opts }));
+      const raced = ctx.agents.get(resumeSessionId);
+      if (raced) return borrow(raced, resumeSessionId);
+      let handle;
+      try { handle = await ctx.agents.resume({ resumeSessionId, ...opts }); }
+      catch (error) {
+        const current = ctx.agents.get(resumeSessionId);
+        if (current && error?.name === 'SessionAlreadyOwnedError') return borrow(current, resumeSessionId);
+        throw error;
+      }
+      return register(handle);
     },
   };
 }
@@ -109,6 +137,7 @@ export default class KookPlugin {
     allowedChannels: z.array(z.string().pattern(/^\d+$/)).default(undefined).description('允许使用的频道 ID；空列表禁用频道。').volatile(),
     allowPrivate: z.boolean().description('允许白名单用户私聊机器人，默认开启。').volatile(),
     autoForwardChannels: z.boolean().description('自动把白名单频道中的普通消息转发到 DSH。').volatile(),
+    mentionWakeup: z.boolean().description('在白名单频道中允许直接 @当前机器人并发送正文唤醒，默认开启。').volatile(),
     pairingEnabled: z.boolean().description('陌生人必须经主人批准后才能使用。').volatile(),
     ownerUserId: z.string().description('主人 KOOK 用户 ID，用于接收配对请求。').volatile(),
     personality: z.string().description('机器人长期行为和说话风格设定。').volatile(),
@@ -184,7 +213,7 @@ export default class KookPlugin {
       bridge = new KookBridge({ config, store, companion, knowledge, agents, images, send: (destination, text) => transport.send(destination, text), logger });
       const untool = this.ctx.tools.register(createImageTool({ bridge, images, transport, logger }), {
         when: ({ agent }) => !bridge.stopped && bridge.destinations.has(agent.id) &&
-          [...bridge.handles.values()].some(handle => handle.agent === agent),
+          [...bridge.handles.values()].some(handle => handle.agent === agent && (!handle.isCurrent || handle.isCurrent())),
       });
       const unlisten = this.ctx.on('session/event', (session, event) => bridge.onSessionEvent(session, event));
       this.runtime = { stop: async () => {

@@ -13,6 +13,16 @@ const draft = patch => ({ ...toDraft({ workspace: 'C:\\KOOK', allowedUsers: ['12
 const parse = patch => parseDraft(draft(patch));
 const opFor = (ops, key) => ops.find(op => op.path[0] === key);
 
+test('mention wakeup defaults on for existing settings and preserves explicit off through save operations', () => {
+  assert.equal(toDraft({ workspace: 'C:\\KOOK', allowedUsers: ['123'] }).mentionWakeup, true);
+  for (const enabled of [false, true]) {
+    const values = parse({ mentionWakeup: enabled });
+    assert.equal(values.mentionWakeup, enabled);
+    assert.deepEqual(plain(opFor(buildConfigOps(values, 'keep'), 'mentionWakeup')),
+      { op: 'set', path: ['mentionWakeup'], value: enabled });
+  }
+});
+
 test('draft never echoes stored Token and retains stored settings including unavailable model ids', () => {
   const saved = { token: 'do-not-show-this-token', workspace: 'C:\\KOOK', allowedUsers: ['123', '456'], allowedChannels: ['789'],
     provider: 'offline-provider', model: 'temporarily-unlisted-model', agentPreset: 'custom-preset',

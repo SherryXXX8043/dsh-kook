@@ -19,7 +19,7 @@ export function createImageTool({ bridge, images, transport, logger }) {
     isConcurrencySafe: () => false,
     async execute(args, exec) {
       const destination = bridge.destinations.get(exec.agent?.id);
-      const owns = [...bridge.handles.values()].some(handle => handle.agent === exec.agent);
+      const owns = [...bridge.handles.values()].some(handle => handle.agent === exec.agent && (!handle.isCurrent || handle.isCurrent()));
       if (!destination || !owns || bridge.stopped) throw new KookError('IMAGE_ROUTE');
       if (!args || typeof args.path !== 'string' || !args.path.trim()) throw new KookError('IMAGE_PATH');
       const signal = AbortSignal.any([exec.signal, bridge.lifetime.signal]);
@@ -28,7 +28,7 @@ export function createImageTool({ bridge, images, transport, logger }) {
         await bridge.queueDelivery(destination, () => {
           signal.throwIfAborted();
           if (bridge.destinations.get(exec.agent.id) !== destination ||
-            ![...bridge.handles.values()].some(handle => handle.agent === exec.agent)) throw new KookError('IMAGE_ROUTE');
+            ![...bridge.handles.values()].some(handle => handle.agent === exec.agent && (!handle.isCurrent || handle.isCurrent()))) throw new KookError('IMAGE_ROUTE');
           return transport.sendImage(destination, input, signal);
         });
         return { status: 'sent', message: '图片已发送到当前 KOOK 聊天。请勿重复发送同一张图。' };

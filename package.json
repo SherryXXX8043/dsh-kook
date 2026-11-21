@@ -1,6 +1,6 @@
 {
   "name": "dsh-kook",
-  "version": "0.3.4-local.rc5.5",
+  "version": "0.3.4-local.rc5.8",
   "private": true,
   "description": "Connect local DeepSeek Harness agents to KOOK via WebSocket",
   "author": "lspbupt@sina.com",

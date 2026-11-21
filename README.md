@@ -4,7 +4,7 @@
 
 本项目是 [kaiheila/dsh-kook](https://github.com/kaiheila/dsh-kook) 的社区 Fork，基于官方 `0.3.4` 适配 **DSH `0.2.2-rc.5`**，并增加图片收发能力。使用 KOOK 官方 WebSocket 接口直连，无需额外部署 Satori 网关或公网回调服务。
 
-> 本轮开发版本：`0.3.4-local.rc5.8`，位于 `feature/mention-wakeup`，在现有适配、图片和设置优化基础上增加 @机器人唤醒；尚未合并到 `main`。`main` 目前为此前的 rc5.5 集成版本。本版本未发布到 npm，也未发布 GitHub Release。请按下文从源码构建并安装。
+> 本轮开发版本：`0.3.4-local.rc5.9`，位于 `feature/mention-wakeup`，在现有适配、图片和设置优化基础上增加 @机器人唤醒；尚未合并到 `main`。`main` 目前为此前的 rc5.5 集成版本。本版本未发布到 npm，也未发布 GitHub Release。请按下文从源码构建并安装。
 
 ## 功能
 
@@ -49,7 +49,7 @@ npm pack --ignore-scripts
 成功后，项目根目录会生成：
 
 ```text
-dsh-kook-0.3.4-local.rc5.8.tgz
+dsh-kook-0.3.4-local.rc5.9.tgz
 ```
 
 仓库中的 `dist/`、依赖目录和本机诊断产物不提交到 Git。构建和安装可能需要联网下载依赖，安装包不是离线依赖合集。
@@ -60,7 +60,7 @@ dsh-kook-0.3.4-local.rc5.8.tgz
 2. 输入刚生成的压缩包的**绝对路径**，例如：
 
    ```text
-   C:/Projects/dsh-kook/dsh-kook-0.3.4-local.rc5.8.tgz
+   C:/Projects/dsh-kook/dsh-kook-0.3.4-local.rc5.9.tgz
    ```
 
 3. 完成安装并启用插件，刷新 DSH 页面。
@@ -70,7 +70,7 @@ dsh-kook-0.3.4-local.rc5.8.tgz
 
 也可以在安装依赖、构建后，用项目目录的绝对路径进行目录安装；安装后请保持该目录位置不变。压缩包方式更适合固定版本使用。
 
-不要用 `dsh-kook@0.3.4-local.rc5.8` 安装：它没有发布到 npm。官方 `dsh-kook@0.3.4` 是另一个版本，其宿主版本要求不同。
+不要用 `dsh-kook@0.3.4-local.rc5.9` 安装：它没有发布到 npm。官方 `dsh-kook@0.3.4` 是另一个版本，其宿主版本要求不同。
 
 ## 首次配置
 

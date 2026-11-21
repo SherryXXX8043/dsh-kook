@@ -111,9 +111,16 @@ window.__ModuleLoader__.load({
     .kook-settings .kook-browser ul{list-style:none;margin:12px 0;padding:0;max-height:240px;overflow:auto}
     .kook-settings .kook-browser li+li{margin-top:4px}
     .kook-settings .kook-browser li button{width:100%;text-align:left;overflow:hidden;text-overflow:ellipsis}
-    .kook-settings .kook-footer{position:sticky;bottom:0;z-index:1;padding:14px 0;margin-top:20px;border-top:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-base)}
-    .kook-settings .kook-footer .kook-hint{margin:0 0 10px}
-    @media(max-width:580px){.kook-settings .kook-grid{grid-template-columns:1fr}.kook-settings .kook-section{padding:14px}.kook-settings .kook-details-body{padding:14px}.kook-settings .kook-footer .kook-actions{gap:6px}}
+    .kook-settings>form{padding-bottom:16px;scroll-padding-bottom:150px}
+    .kook-settings :is(input,select,textarea,summary){scroll-margin-block:24px 160px}
+    .kook-settings .kook-footer{position:sticky;bottom:12px;z-index:2;padding:14px 16px;margin-top:24px;border:1px solid var(--dsw-alias-border-l2);border-radius:14px;background:var(--dsw-alias-bg-layer-1);box-shadow:0 4px 18px color-mix(in srgb,var(--dsw-alias-label-primary) 8%,transparent)}
+    .kook-settings .kook-footer-main{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .kook-settings .kook-footer .kook-hint{flex:1 1 240px;min-width:0;margin:0;line-height:1.6}
+    .kook-settings .kook-footer .kook-actions{margin-left:auto;gap:8px}
+    .kook-settings .kook-footer .kook-primary{background:color-mix(in srgb,var(--dsw-alias-brand-primary) 12%,var(--dsw-alias-bg-layer-1));border-color:color-mix(in srgb,var(--dsw-alias-brand-primary) 55%,var(--dsw-alias-border-l2))}
+    .kook-settings .kook-footer .kook-primary:disabled{background:var(--dsw-alias-bg-layer-2);border-color:var(--dsw-alias-border-l1);color:var(--dsw-alias-label-secondary);opacity:1}
+    .kook-settings .kook-footer .kook-note{margin:0 0 12px;max-height:120px;overflow:auto}
+    @media(max-width:580px){.kook-settings .kook-grid{grid-template-columns:1fr}.kook-settings .kook-section{padding:14px}.kook-settings .kook-details-body{padding:14px}.kook-settings .kook-footer{bottom:8px;padding:12px;border-radius:12px}.kook-settings .kook-footer-main{gap:10px}.kook-settings .kook-footer .kook-actions{width:100%;margin-left:0}.kook-settings .kook-footer .kook-actions button{flex:1;min-width:0;height:auto;min-height:36px;padding:8px;white-space:normal;overflow-wrap:anywhere}}
     `;
     function KookSettings({ form, mirror, remote, workspace, locale, t = (text, params = {}) => text.replace(/\{(\w+)\}/g, (match, key) => params[key] ?? match) }) {
       const localeSubscribe = useCallback(listener => locale ? locale.subscribe(listener) : () => {}, [locale]);
@@ -318,12 +325,13 @@ window.__ModuleLoader__.load({
               h('button', { type: 'button', onClick: closeBrowser }, t('取消')))),
           !browser.listing && h('button', { type: 'button', onClick: closeBrowser }, t('取消'))),
         h('div', { className: 'kook-footer' },
-          h('p', { className: 'kook-hint' }, t('保存会重连机器人并停止当前 KOOK 任务，请等回答结束后再保存。')),
           error && h('p', { role: 'alert', className: 'kook-note kook-error' }, t(error)),
           notice && h('p', { role: 'status', className: 'kook-note kook-success' }, t(notice)),
-          h('div', { className: 'kook-actions' },
-            h('button', { type: 'submit', className: 'kook-primary', disabled: disabled || !dirty || state.revision !== revision }, t(saving ? '正在保存…' : '保存设置')),
-            h('button', { type: 'button', disabled: saving || importing, onClick: reset }, t('重新载入 / 放弃修改'))))));
+          h('div', { className: 'kook-footer-main' },
+            h('p', { className: 'kook-hint' }, t('保存会重连机器人并停止当前 KOOK 任务，请等回答结束后再保存。')),
+            h('div', { className: 'kook-actions' },
+              h('button', { type: 'submit', className: 'kook-primary', disabled: disabled || !dirty || state.revision !== revision }, t(saving ? '正在保存…' : '保存设置')),
+              h('button', { type: 'button', disabled: saving || importing, onClick: reset }, t('重新载入 / 放弃修改')))))));
     }
     exports.inject = ['slots', 'locale', 'configForms', 'remote', 'remote.session', 'remote.agentPresets', 'uiWorkspace'];
     exports.apply = function apply(ctx) {

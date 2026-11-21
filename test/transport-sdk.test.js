@@ -31,17 +31,27 @@ function event(id, overrides = {}) {
     author_id: 'user-1', content: `text ${id}`, msg_id: id, msg_timestamp: Date.now(),
     extra: { author: { id: 'user-1', bot: false } }, ...overrides };
 }
-async function fixture(t, { requestTimeoutMs = 500, failFirstSelf = false } = {}) {
+async function fixture(t, { requestTimeoutMs = 500, failFirstSelf = false,
+  uploadFailure, imageMessageFailure, uploadUrl = 'https://img.kookapp.cn/assets/local-image.png' } = {}) {
   const requests = [], connections = [], frames = [], clients = [], messages = [], statuses = [];
   const sockets = new Set();
   let selfCalls = 0;
   const server = createServer(async (req, res) => {
     const chunks = [];
     for await (const chunk of req) chunks.push(chunk);
-    const body = Buffer.concat(chunks).toString();
+    const bytes = Buffer.concat(chunks);
+    const contentType = req.headers['content-type'] || '';
+    const multipart = contentType.startsWith('multipart/form-data');
+    const body = multipart ? await new Request('http://localhost', {
+      method: 'POST', headers: { 'content-type': contentType }, body: bytes,
+    }).formData() : undefined;
+    const file = body?.get('file');
     const url = new URL(req.url, 'http://localhost');
     const record = { path: url.pathname, query: url.searchParams, method: req.method,
-      authorization: req.headers.authorization, body: body ? JSON.parse(body) : undefined,
+      authorization: req.headers.authorization,
+      body: multipart ? undefined : bytes.length ? JSON.parse(bytes.toString()) : undefined,
+      contentType, file: file ? { name: file.name, mediaType: file.type,
+        data: Buffer.from(await file.arrayBuffer()) } : undefined,
       closed: false };
     requests.push(record);
     res.on('close', () => { record.closed = true; });
@@ -54,7 +64,19 @@ async function fixture(t, { requestTimeoutMs = 500, failFirstSelf = false } = {}
       return respond({ id: 'bot-1', username: 'local-bot', bot: true }, failFirstSelf && selfCalls === 1 ? 401 : 0);
     }
     if (url.pathname === '/api/v3/gateway/index') return respond({ url: `ws://127.0.0.1:${server.address().port}/gateway` });
+    const fail = mode => {
+      if (mode === 'hang') return;
+      if (mode === 'rate-limit') return respond({}, 429, 429);
+      if (mode === 'api-error') return respond({}, 40001);
+      if (mode === 'http-error') return respond({}, 0, 503);
+      if (mode === 'bad-json') { res.writeHead(200); return res.end('not json'); }
+    };
+    if (url.pathname === '/api/v3/asset/create') {
+      if (uploadFailure) return fail(uploadFailure);
+      return respond({ url: uploadUrl });
+    }
     if (['/api/v3/message/create', '/api/v3/direct-message/create'].includes(url.pathname)) {
+      if (record.body.type === 2 && imageMessageFailure) return fail(imageMessageFailure);
       if (record.body.content === 'hang') return;
       if (record.body.content === 'rate-limit') return respond({}, 429, 429);
       if (record.body.content === 'api-error') return respond({}, 40001);
@@ -115,21 +137,31 @@ test('official SDK performs bot lookup, uncompressed gateway handshake and heart
   assert.equal(f.clients.length, 1);
 });
 
-test('official raw events map group/private text and reject bot/non-text messages', { timeout: 5000 }, async t => {
+test('official raw events normalize group/private text and images and reject bot/unsupported messages', { timeout: 5000 }, async t => {
   const f = await fixture(t);
   f.sendEvent(1, event('group'));
   f.sendEvent(2, event('private', { channel_type: 'PERSON', type: 9, target_id: 'bot-1', author_id: 'person-2' }));
-  f.sendEvent(3, event('image', { type: 2 }));
+  f.sendEvent(3, event('image', { type: 2, content: 'https://img.kookapp.cn/fallback.png',
+    extra: { attachments: { url: 'https://img.kookapp.cn/attachment.png', name: 'photo.png' } } }));
   f.sendEvent(4, event('bot', { extra: { author: { bot: true } } }));
   f.sendEvent(5, event('system', { type: 255 }));
   f.sendEvent(6, event('group')); // Same message id with a new sequence number.
-  f.sendEvent(7, event('last'));
+  f.sendEvent(7, event('private-image', { channel_type: 'PERSON', type: 2,
+    target_id: 'bot-1', author_id: 'person-2', content: 'https://img.kookapp.cn/private.png' }));
+  f.sendEvent(8, event('unsupported-file', { type: 4 }));
+  f.sendEvent(9, event('last'));
   await until(() => f.messages.some(m => m.id === 'last'), 'all event frames processed');
-  assert.deepEqual(f.messages.map(m => m.id), ['group', 'private', 'last']);
+  assert.deepEqual(f.messages.map(m => m.id), ['group', 'private', 'image', 'private-image', 'last']);
   assert.deepEqual(f.messages.slice(0, 2).map(({ kind, targetId, authorId, text }) => ({ kind, targetId, authorId, text })), [
     { kind: 'channel', targetId: 'channel-1', authorId: 'user-1', text: 'text group' },
     { kind: 'private', targetId: 'person-2', authorId: 'person-2', text: 'text private' },
   ]);
+  assert.deepEqual(f.messages[2], { id: 'image', kind: 'channel', targetId: 'channel-1',
+    authorId: 'user-1', text: '', isBot: false,
+    images: [{ url: 'https://img.kookapp.cn/attachment.png', name: 'photo.png' }] });
+  assert.deepEqual(f.messages[3], { id: 'private-image', kind: 'private', targetId: 'person-2',
+    authorId: 'person-2', text: '', isBot: false,
+    images: [{ url: 'https://img.kookapp.cn/private.png', name: undefined }] });
 });
 
 test('official REST sends exact group and private endpoints and payloads', { timeout: 5000 }, async t => {
@@ -195,4 +227,77 @@ test('official REST timeout cancels a stalled local request', { timeout: 5000 },
   await assert.rejects(f.transport.send({ kind: 'channel', targetId: 'channel-1' }, 'hang'));
   await until(() => f.requests.some(r => r.body?.content === 'hang' && r.closed), 'timed-out request socket closes');
   assert.equal(f.requests.filter(r => r.body?.content === 'hang').length, 1);
+});
+
+const picture = { data: Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 0, 255, 128, 10]),
+  mediaType: 'image/png', name: 'binary-picture.png' };
+
+test('official SDK uploads exact binary multipart file and sends type 2 to both targets', { timeout: 5000 }, async t => {
+  const f = await fixture(t);
+  for (const kind of ['channel', 'private']) {
+    assert.deepEqual(await f.transport.sendImage({ kind, targetId: `${kind}-target` }, picture),
+      { msg_id: 'sent-id', msg_timestamp: 123 });
+  }
+  const posts = f.requests.filter(r => r.method === 'POST');
+  assert.deepEqual(posts.map(r => r.path), ['/api/v3/asset/create', '/api/v3/message/create',
+    '/api/v3/asset/create', '/api/v3/direct-message/create']);
+  for (const upload of posts.filter(r => r.file)) {
+    assert.match(upload.contentType, /^multipart\/form-data; boundary=/);
+    assert.deepEqual(upload.file, { name: picture.name, mediaType: picture.mediaType, data: picture.data });
+    assert.equal(upload.authorization, `Bot ${token}`);
+  }
+  assert.equal(posts.filter(r => r.file).length, 2);
+  assert.deepEqual(posts.filter(r => r.body).map(r => r.body), [
+    { target_id: 'channel-target', type: 2, content: 'https://img.kookapp.cn/assets/local-image.png' },
+    { target_id: 'private-target', type: 2, content: 'https://img.kookapp.cn/assets/local-image.png' },
+  ]);
+});
+
+test('official SDK never retries image upload or message failures', { timeout: 10000 }, async t => {
+  for (const failure of ['rate-limit', 'api-error', 'http-error', 'bad-json']) {
+    for (const stage of ['uploadFailure', 'imageMessageFailure']) {
+      await t.test(`${stage}: ${failure}`, async t => {
+        const f = await fixture(t, { [stage]: failure });
+        await assert.rejects(f.transport.sendImage({ kind: 'channel', targetId: 'channel-1' }, picture),
+          /KOOK message delivery failed/);
+        await delay(30);
+        assert.equal(f.requests.filter(r => r.path === '/api/v3/asset/create').length, 1);
+        assert.equal(f.requests.filter(r => r.body?.type === 2).length, stage === 'uploadFailure' ? 0 : 1);
+      });
+    }
+  }
+});
+
+test('untrusted uploaded asset URL cannot trigger an image message', { timeout: 5000 }, async t => {
+  const f = await fixture(t, { uploadUrl: 'https://example.com/untrusted.png' });
+  await assert.rejects(f.transport.sendImage({ kind: 'private', targetId: 'person-2' }, picture),
+    error => error.code === 'IMAGE_URL');
+  assert.equal(f.requests.filter(r => r.path === '/api/v3/asset/create').length, 1);
+  assert.equal(f.requests.filter(r => r.body?.type === 2).length, 0);
+});
+
+test('already-cancelled image delivery issues no POST', { timeout: 5000 }, async t => {
+  const f = await fixture(t);
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(f.transport.sendImage({ kind: 'private', targetId: 'person-2' }, picture, controller.signal));
+  assert.equal(f.requests.filter(r => r.method === 'POST').length, 0);
+});
+
+test('cancellation and stop abort a pending image upload without sending or retrying', { timeout: 10000 }, async t => {
+  for (const mode of ['signal', 'stop']) {
+    await t.test(mode, async t => {
+      const f = await fixture(t, { uploadFailure: 'hang', requestTimeoutMs: 2000 });
+      const controller = new AbortController();
+      const rejected = assert.rejects(f.transport.sendImage({ kind: 'channel', targetId: 'channel-1' }, picture, controller.signal));
+      await until(() => f.requests.some(r => r.path === '/api/v3/asset/create'), 'pending asset upload');
+      if (mode === 'stop') await f.transport.stop();
+      else controller.abort();
+      await rejected;
+      await until(() => f.requests.find(r => r.path === '/api/v3/asset/create').closed, 'asset request cancellation');
+      await delay(30);
+      assert.equal(f.requests.filter(r => r.path === '/api/v3/asset/create').length, 1);
+      assert.equal(f.requests.filter(r => r.body?.type === 2).length, 0);
+    });
+  }
 });

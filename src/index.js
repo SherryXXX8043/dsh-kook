@@ -7,6 +7,8 @@ import { KookBridge } from './bridge.js';
 import { KookError, step, reportFailure } from './errors.js';
 import { RouteStore } from './store.js';
 import { CompanionStore, readKnowledge } from './companion.js';
+import { KookImages } from './images.js';
+import { createImageTool } from './image-tool.js';
 
 export function configSnapshot(config = {}) {
   return Object.fromEntries(Object.entries(config).map(([key, value]) => [key,
@@ -46,7 +48,7 @@ export function resolveConfig(config = {}, env = process.env) {
   return result;
 }
 
-/** Adapter for the public DSH 0.2.2-rc.3 Agent APIs. */
+/** Adapter for the public DSH 0.2.2-rc.5 Agent APIs. */
 export function createAgentAdapter(ctx, config, signal) {
   async function options() {
     const presets = ctx.get('agentPresets');
@@ -57,13 +59,20 @@ export function createAgentAdapter(ctx, config, signal) {
     if (!selection?.provider || !selection?.model) throw new KookError('MODEL_UNAVAILABLE');
     return {
       ...(signal ? { signal } : {}),
-      agentOptions: { provider: selection.provider, model: selection.model },
+      agentOptions: { provider: selection.provider, model: selection.model,
+        ...(selection.reasoningEffort === undefined ? {} : { reasoningEffort: selection.reasoningEffort }) },
       meta: { cwd: config.workspace, ...(presetId ? { agentPreset: presetId } : {}) },
       setup: async (agentCtx, agent) => {
         if (agent.session.header.cwd !== config.workspace) throw new KookError('WORKSPACE_CHANGED');
         const storedPreset = presets ? presets.presetForSession(agent.session) ?? undefined : agent.session.header.agentPreset;
         if (storedPreset !== presetId) throw new KookError('PRESET_CHANGED');
         if (presets) await step('PRESET_UNAVAILABLE', () => presets.mount(agentCtx, presetId));
+        // rc.5 resume preserves recorded selections; agentOptions alone is only a fallback.
+        // This handle is still unpublished, so selecting here cannot race with a running turn.
+        await step('MODEL_UNAVAILABLE', () => agent.model.select({
+          provider: selection.provider, model: selection.model,
+          ...(selection.reasoningEffort === undefined ? {} : { reasoningEffort: selection.reasoningEffort }),
+        }));
       },
     };
   }
@@ -92,7 +101,7 @@ export function createAgentAdapter(ctx, config, signal) {
 }
 
 export default class KookPlugin {
-  static inject = ['agents', 'agentDefaultModel', 'workspaceRegistry'];
+  static inject = ['agents', 'agentDefaultModel', 'workspaceRegistry', 'attachments', 'fs', 'tools'];
   static Config = z.object({
     token: z.string().role('secret').description('KOOK Bot Token；留空并保存可停止连接。').volatile(),
     workspace: z.string().description('工作目录：已存在目录的绝对路径。').volatile(),
@@ -170,9 +179,16 @@ export default class KookPlugin {
         try { await agents.attach(sessionId); }
         catch (error) { reportFailure(logger, error); }
       }
-      bridge = new KookBridge({ config, store, companion, knowledge, agents, send: (destination, text) => transport.send(destination, text), logger });
+      const images = new KookImages({ attachments: this.ctx.attachments, fs: this.ctx.fs,
+        workspace: config.workspace, signal: lifetime.signal });
+      bridge = new KookBridge({ config, store, companion, knowledge, agents, images, send: (destination, text) => transport.send(destination, text), logger });
+      const untool = this.ctx.tools.register(createImageTool({ bridge, images, transport, logger }), {
+        when: ({ agent }) => !bridge.stopped && bridge.destinations.has(agent.id) &&
+          [...bridge.handles.values()].some(handle => handle.agent === agent),
+      });
       const unlisten = this.ctx.on('session/event', (session, event) => bridge.onSessionEvent(session, event));
       this.runtime = { stop: async () => {
+        untool();
         unlisten();
         lifetime.abort();
         const stopping = bridge.stop();

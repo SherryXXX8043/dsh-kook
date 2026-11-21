@@ -14,8 +14,11 @@ export function splitText(text, maxBytes = 3500) {
 }
 
 export class KookBridge {
-  constructor({ config, store, companion, knowledge = [], agents, send, logger = console }) {
-    Object.assign(this, { config, store, companion, knowledge, agents, send, logger });
+  constructor({ config, store, companion, knowledge = [], agents, send, images, logger = console }) {
+    Object.assign(this, { config, store, companion, knowledge, agents, send, images, logger });
+    this.imageRequests = new Map();
+    this.imageControllers = new Map();
+    this.lifetime = new AbortController();
     this.handles = new Map();
     this.destinations = new Map();
     this.sessionUsers = new Map();
@@ -34,13 +37,15 @@ export class KookBridge {
     if (kind === 'private' && authorId !== this.config.ownerUserId && !this.config.allowedUsers.includes(authorId) && !this.companion?.isPaired(authorId, this.config.allowedUsers)) {
       return { key: `pair:${authorId}`, destination: { kind, targetId }, prompt: text.trim(), pairing: true, authorId };
     }
+    const images = Array.isArray(message.images) ? message.images.map(image => ({ ...image })) : [];
     let prompt = text.trim();
     const prefix = this.config.commandPrefix;
     const prefixed = prompt === prefix || (prompt.startsWith(prefix) && /^\s/.test(prompt.slice(prefix.length)));
-    if (kind === 'channel' && !prefixed && !this.config.autoForwardChannels) return;
+    const needsImageRequest = kind === 'channel' && !prefixed && !this.config.autoForwardChannels;
+    if (needsImageRequest && !images.length) return;
     if (prefixed) prompt = prompt.slice(prefix.length).trim();
     if (Buffer.byteLength(prompt) > 16000) return;
-    return { key: JSON.stringify([kind, targetId, authorId]), destination: { kind, targetId }, prompt, authorId };
+    return { key: JSON.stringify([kind, targetId, authorId]), destination: { kind, targetId }, prompt, authorId, images, needsImageRequest };
   }
   receive(message) {
     const parsed = this.parse(message);
@@ -51,37 +56,68 @@ export class KookBridge {
     if (this.seen.has(dedupeKey)) return Promise.resolve();
     this.seen.set(dedupeKey, now);
     if (this.seen.size > 10000) this.seen.delete(this.seen.keys().next().value);
+    if (['/stop', '/new'].includes(parsed.prompt) && !parsed.images?.length) {
+      for (const controller of this.imageControllers.get(parsed.key) ?? []) controller.abort();
+    }
+    if (parsed.images?.length) {
+      parsed.imageController = new AbortController();
+      const controllers = this.imageControllers.get(parsed.key) ?? new Set();
+      controllers.add(parsed.imageController);
+      this.imageControllers.set(parsed.key, controllers);
+    }
     this.pendingCount++;
     const prior = this.incoming.get(parsed.key) ?? Promise.resolve();
     const task = prior.then(() => this.process(parsed)).catch(async error => {
-      await this.reply(parsed.destination, reportFailure(this.logger, error));
+      const retry = parsed.images?.length && parsed.needsImageRequest
+        ? `\n频道接图请求已消费。重试前请先发送 ${this.config.commandPrefix} /image <问题>，再发送图片。` : '';
+      await this.reply(parsed.destination, reportFailure(this.logger, error) + retry);
     }).finally(() => {
       this.pendingCount--;
+      const controllers = this.imageControllers.get(parsed.key);
+      controllers?.delete(parsed.imageController);
+      if (controllers?.size === 0) this.imageControllers.delete(parsed.key);
       if (this.incoming.get(parsed.key) === task) this.incoming.delete(parsed.key);
     });
     this.incoming.set(parsed.key, task);
     return task;
   }
-  async process({ key, destination, prompt, pairing, authorId }) {
-    if (this.stopped) return;
+  async process({ key, destination, prompt, pairing, authorId, images = [], needsImageRequest, imageController }) {
+    if (this.stopped || imageController?.signal.aborted) return;
+    const hasImages = images.length > 0;
+    if (hasImages) {
+      const pending = this.imageRequests.get(key);
+      this.imageRequests.delete(key);
+      const armed = pending?.expiresAt > Date.now();
+      if (needsImageRequest && !armed) return;
+      if (armed) prompt = pending.prompt;
+      prompt ||= '请根据上下文查看这张图片；没有其他问题时，请简要描述图片内容。';
+    }
     if (pairing) {
       if (!this.config.pairingEnabled || !this.companion || !this.config.ownerUserId) return this.reply(destination, '此机器人未开启陌生人配对，请联系主人添加你的 KOOK 用户 ID。');
       const request = await step('PAIRING_SAVE', () => this.companion.request(authorId));
       await this.reply(destination, `你的请求正在等待主人批准。请将配对码 ${request.code} 发给主人。`);
       return this.reply({ kind: 'private', targetId: this.config.ownerUserId }, `收到新的 KOOK 配对请求：用户 ${authorId}，配对码 ${request.code}。批准请发送 /approve ${request.code}。`);
     }
-    if (!prompt || prompt === '/help') {
-      return this.reply(destination, `直接发送文字与 DSH 对话。频道内使用 ${this.config.commandPrefix} <文字>。\n/help 帮助 · /status 会话 · /stop 停止 · /new 新会话\n审批和交互问题请在本地 DSH 完成。`);
+    if (!hasImages && (!prompt || prompt === '/help')) {
+      return this.reply(destination, `直接发送文字或图片与 DSH 对话（看图需要支持图片的模型）。频道内使用 ${this.config.commandPrefix} <文字>。\n频道未开启自动转发时，先发 ${this.config.commandPrefix} /image <问题>，再在两分钟内发一张图。\n/help 帮助 · /image <问题> 接收下一张图 · /status 会话 · /stop 停止 · /new 新会话\n需要收图时可说“把工作目录中的某张图片发给我”。\n审批和交互问题请在本地 DSH 完成。`);
     }
-    if (prompt === '/status') {
+    if (!hasImages && (prompt === '/image' || prompt.startsWith('/image '))) {
+      for (const [route, request] of this.imageRequests) if (request.expiresAt <= Date.now()) this.imageRequests.delete(route);
+      if (!this.imageRequests.has(key) && this.imageRequests.size >= 100) throw new KookError('IMAGE_BUSY');
+      this.imageRequests.set(key, { prompt: prompt.slice(6).trim() || '请描述这张图片。', expiresAt: Date.now() + 120000 });
+      return this.reply(destination, '请在两分钟内发送一张图片；仅接收你在当前聊天中的下一张图。');
+    }
+    if (!hasImages && prompt === '/status') {
       const id = this.store.get(key);
       return this.reply(destination, id ? `DSH 会话：${id}\n状态：${this.handles.get(key)?.agent.status ?? '未加载'}` : '尚未创建会话。');
     }
-    if (prompt === '/stop') {
+    if (!hasImages && prompt === '/stop') {
+      this.imageRequests.delete(key);
       this.handles.get(key)?.agent.cancel({ kind: 'user' });
       return this.reply(destination, '已停止当前已加载会话的任务。');
     }
-    if (prompt === '/new') {
+    if (!hasImages && prompt === '/new') {
+      this.imageRequests.delete(key);
       const handle = this.handles.get(key);
       // Remove the route only after persistence succeeds; never silently lose a session.
       await step('ROUTE_SAVE', () => this.store.set(key, undefined));
@@ -102,20 +138,33 @@ export class KookBridge {
       const memories = await step('MEMORY_READ', () => this.companion?.recall(authorId ?? '', '', 20, this.config.memoryHalfLifeMonths));
       return this.reply(destination, memories?.length ? memories.map(item => `- ${item.text}`).join('\n') : '当前没有已保存的长期记忆。');
     }
+    let imageBlocks = [];
+    if (hasImages) {
+      if (!this.images) throw new KookError('IMAGE_UNAVAILABLE');
+      const controller = imageController;
+      try {
+        imageBlocks = await this.images.admit(images, AbortSignal.any([this.lifetime.signal, controller.signal]));
+        if (controller.signal.aborted) return;
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        throw error;
+      }
+      if (this.stopped) return;
+    }
     let handle = this.handles.get(key);
     if (!handle) {
       const existingId = this.store.get(key);
       const id = existingId ?? `session-${randomUUID()}`;
       if (this.handles.size >= 100) throw new KookError('SESSION_LIMIT');
       handle = await step(existingId ? 'SESSION_RESUME' : 'SESSION_CREATE', () => existingId ? this.agents.resume(id) : this.agents.create(id));
-      if (this.stopped) { await handle.dispose(); return; }
+      if (this.stopped || imageController?.signal.aborted) { await handle.dispose(); return; }
       try { if (!existingId) await step('ROUTE_SAVE', () => this.store.set(key, id)); }
       catch (error) { await handle.dispose(); throw error; }
       this.handles.set(key, handle);
       this.destinations.set(handle.agent.id, destination);
       this.sessionUsers.set(handle.agent.id, authorId);
     }
-    if (this.stopped) return;
+    if (this.stopped || imageController?.signal.aborted) return;
     const memories = await step('MEMORY_READ', () => this.companion?.recall(authorId, prompt, this.config.memoryLimit, this.config.memoryHalfLifeMonths) ?? []);
     const words = new Set(prompt.toLowerCase().match(/[\p{L}\p{N}]{2,}/gu) ?? []);
     const knowledge = this.knowledge.map(text => ({ text, score: [...words].filter(word => text.toLowerCase().includes(word)).length }))
@@ -126,8 +175,11 @@ export class KookBridge {
       knowledge.length ? `【知识库相关资料】\n${knowledge.map(item => `- ${item}`).join('\n')}` : '',
     ].filter(Boolean).join('\n\n');
     const modelPrompt = context ? `${context}\n\n【用户本次消息】\n${prompt}` : prompt;
+    if (this.stopped || imageController?.signal.aborted) return;
     await step('MEMORY_SAVE', () => this.companion?.remember(authorId, prompt, 'user-message'));
-    const message = Object.freeze({ id: randomUUID(), role: 'user', content: Object.freeze([Object.freeze({ type: 'text', text: modelPrompt })]), source: Object.freeze({ kind: 'user' }) });
+    if (this.stopped || imageController?.signal.aborted) return;
+    const content = [{ type: 'text', text: modelPrompt }, ...imageBlocks].map(block => Object.freeze(block));
+    const message = Object.freeze({ id: randomUUID(), role: 'user', content: Object.freeze(content), source: Object.freeze({ kind: 'user' }) });
     await step('MESSAGE_SUBMIT', () => handle.agent.followup(message));
   }
   /** Called only for live committed events; history is never replayed to KOOK. */
@@ -146,23 +198,31 @@ export class KookBridge {
       void this.reply(destination, `DSH 本轮未完成，请在本地查看会话 ${session.id}。`);
     }
   }
-  reply(destination, text) {
-    if (this.stopped) return Promise.resolve();
+  queueDelivery(destination, operation) {
+    if (this.stopped) return Promise.reject(new Error('KOOK bridge stopped'));
     const key = JSON.stringify(destination);
     const previous = this.outgoing.get(key) ?? Promise.resolve();
-    const task = previous.then(async () => {
+    const task = previous.catch(() => {}).then(() => {
+      if (this.stopped) throw new Error('KOOK bridge stopped');
+      return operation();
+    });
+    this.outgoing.set(key, task);
+    void task.finally(() => { if (this.outgoing.get(key) === task) this.outgoing.delete(key); }).catch(() => {});
+    return task;
+  }
+  reply(destination, text) {
+    if (this.stopped) return Promise.resolve();
+    return this.queueDelivery(destination, async () => {
       for (const part of splitText(text)) {
         if (this.stopped) break;
-        // No blind POST retries: a timeout may mean KOOK accepted the message.
         await this.send(destination, part);
       }
-    }).catch(() => { this.logger.warn('KOOK delivery failed; the original response remains in DSH.'); })
-      .finally(() => { if (this.outgoing.get(key) === task) this.outgoing.delete(key); });
-    this.outgoing.set(key, task);
-    return task;
+    }).catch(() => { this.logger.warn('KOOK delivery failed; the original response remains in DSH.'); });
   }
   async stop() {
     this.stopped = true;
+    this.lifetime.abort();
+    this.imageRequests.clear();
     await Promise.allSettled([...this.incoming.values()]);
     this.destinations.clear();
     this.sessionUsers.clear();

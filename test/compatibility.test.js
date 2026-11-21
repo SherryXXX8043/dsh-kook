@@ -5,8 +5,8 @@ const FiberState = { ACTIVE: 2 };
 import KookPlugin, { createAgentAdapter } from '../src/index.js';
 import { KookBridge } from '../src/bridge.js';
 
-function fixture({ storedPreset = 'standard', cwd = process.cwd(), attachError, owned = false } = {}) {
-  const calls = { mounts: [], attachments: [], disposed: 0 };
+function fixture({ storedPreset = 'standard', cwd = process.cwd(), attachError, owned = false, selection, configuredModel = false, selectError } = {}) {
+  const calls = { mounts: [], attachments: [], selections: [], disposed: 0 };
   const presets = {
     resolve: async id => ({ id: id ?? 'standard' }),
     presetForSession: session => session.selectedPreset,
@@ -15,6 +15,7 @@ function fixture({ storedPreset = 'standard', cwd = process.cwd(), attachError, 
   const make = async options => {
     calls.options = options;
     const agent = { id: options.sessionId ?? options.resumeSessionId,
+      model: { select: value => { if (selectError) throw selectError; calls.selections.push(value); } },
       session: { header: { cwd, agentPreset: 'stale-header' }, selectedPreset: storedPreset } };
     await options.setup({}, agent);
     return { agent, dispose: async () => { calls.disposed++; } };
@@ -22,14 +23,15 @@ function fixture({ storedPreset = 'standard', cwd = process.cwd(), attachError, 
   const ctx = {
     get: name => { if (name === 'sessionProjections') throw new Error('Deprecated projection API accessed'); return ctx[name]; },
     agentPresets: presets,
-    agentDefaultModel: { currentSelection: () => ({ provider: 'test', model: 'test-model' }) },
+    agentDefaultModel: { currentSelection: () => selection ?? ({ provider: 'test', model: 'test-model' }) },
     agents: { create: make, resume: make, get: () => owned ? {} : undefined },
     workspaceRegistry: { create: async () => ({ attachSession: async id => {
       if (attachError) throw attachError;
       calls.attachments.push(id);
     } }) },
   };
-  return { calls, adapter: createAgentAdapter(ctx, { workspace: process.cwd(), agentPreset: '' }) };
+  return { calls, adapter: createAgentAdapter(ctx, { workspace: process.cwd(), agentPreset: '',
+    ...(configuredModel ? { provider: 'custom-provider', model: 'custom-model' } : {}) }) };
 }
 
 test('create uses current preset service, mounts default and attaches workspace', async () => {
@@ -102,4 +104,35 @@ test('consecutive KOOK prompts submit distinct identified user messages', async 
     assert.ok(Object.isFrozen(message));
   }
   await bridge.stop();
+});
+
+for (const method of ['create', 'resume']) {
+  test(`${method} retains the default reasoning effort and applies it to the agent`, async () => {
+    const selection = Object.freeze({ provider: 'test', model: 'test-model', reasoningEffort: 'high' });
+    const { adapter, calls } = fixture({ selection });
+    await adapter[method]('reasoning-session');
+    assert.deepEqual(calls.options.agentOptions, selection);
+    assert.deepEqual(calls.selections, [selection]);
+  });
+}
+
+test('resume explicitly selects the configured model instead of relying on fallback options', async () => {
+  const { adapter, calls } = fixture({ configuredModel: true,
+    selection: { provider: 'default', model: 'default-model', reasoningEffort: 'high' } });
+  await adapter.resume('existing-session');
+  assert.deepEqual(calls.selections, [{ provider: 'custom-provider', model: 'custom-model' }]);
+  assert.deepEqual(calls.attachments, ['existing-session']);
+});
+
+test('missing default reasoning effort is not synthesized', async () => {
+  const { adapter, calls } = fixture();
+  await adapter.create('plain-session');
+  assert.equal(Object.hasOwn(calls.options.agentOptions, 'reasoningEffort'), false);
+  assert.equal(Object.hasOwn(calls.selections[0], 'reasoningEffort'), false);
+});
+
+test('selection failure is reported before workspace registration', async () => {
+  const { adapter, calls } = fixture({ selectError: new Error('selection failed') });
+  await assert.rejects(adapter.resume('bad-model-session'), error => error.code === 'MODEL_UNAVAILABLE');
+  assert.deepEqual(calls.attachments, []);
 });

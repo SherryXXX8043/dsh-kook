@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "KOOK 机器人（rc.5 本地版）",
+    "description": "通过 WebSocket 将 KOOK 私聊与指定频道接入 DSH 0.2.2-rc.5，支持文字、图片对话及工作目录图片回复。日常配置请打开左下角账号菜单 → 设置 → KOOK；本页用于启用、停用和版本管理。保存设置会停止当前 KOOK 任务并重连；看图需使用支持图片的模型，审批仍在本地 DSH 完成。",
+    "detail": "docs/DETAIL.zh.md"
+  }
+}

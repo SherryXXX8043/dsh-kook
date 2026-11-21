@@ -1,6 +1,7 @@
 {
   "meta": {
     "title": "KOOK bot (local rc.5 build)",
-    "description": "Connect KOOK private messages and allowed channels to local DSH 0.2.2-rc.5 over WebSocket. Configure the Bot Token, workspace and allowed users on this bundle's KOOK settings page. Locally modified from upstream 0.3.4; supports text and image input and sends workspace images to the current chat; approvals remain in DSH. Saving settings stops active KOOK tasks and reconnects the bot."
+    "description": "Connect KOOK private messages and allowed channels to DSH 0.2.2-rc.5 over WebSocket for text, image input and workspace image replies. Configure it in Account menu → Settings → KOOK; use this page for activation and version management. Saving settings stops active KOOK tasks and reconnects. Image understanding requires a compatible model; approvals remain in local DSH.",
+    "detail": "docs/DETAIL.md"
   }
 }

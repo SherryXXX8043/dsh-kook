@@ -3,9 +3,10 @@ window.__ModuleLoader__.load({
   id: 'dsh-kook',
   factory: (require) => {
     const exports = {};
+    const messages = {"zh":{"输入新 Token 以替换；留空保留现有 Token。已保存的 Token 不会回显。":"输入新 Token 以替换；留空保留现有 Token。已保存的 Token 不会回显。","工作目录":"工作目录","选择运行任务的目录。浏览的是 DSH 主机上的文件夹。":"选择运行任务的目录。浏览的是 DSH 主机上的文件夹。","允许的用户 ID":"允许的用户 ID","必填；每行一个 ID，也可用逗号分隔。只有这些用户能调用机器人。":"必填；每行一个 ID，也可用逗号分隔。只有这些用户能调用机器人。","允许的频道 ID":"允许的频道 ID","每行一个 ID，也可用逗号分隔。留空禁用频道消息，私聊由下方开关控制。":"每行一个 ID，也可用逗号分隔。留空禁用频道消息，私聊由下方开关控制。","允许私聊":"允许私聊","私聊仍受用户白名单限制。":"私聊仍受用户白名单限制。","自动转发频道消息":"自动转发频道消息","开启后，白名单频道中的普通消息会自动进入 DSH；关闭时频道需使用命令前缀。":"开启后，白名单频道中的普通消息会自动进入 DSH；关闭时频道需使用命令前缀。","陌生人配对审批":"陌生人配对审批","陌生人私聊先收到配对码，主人批准后才能使用。":"陌生人私聊先收到配对码，主人批准后才能使用。","主人 KOOK 用户 ID":"主人 KOOK 用户 ID","用于接收陌生人配对请求和批准通知。":"用于接收陌生人配对请求和批准通知。","机器人性格设定":"机器人性格设定","描述长期人格、语气、边界和回答风格。":"描述长期人格、语气、边界和回答风格。","每次使用的记忆条数":"每次使用的记忆条数","按用户独立保存；数值越大，模型看到的记忆越多。":"按用户独立保存；数值越大，模型看到的记忆越多。","记忆半衰期（月）":"记忆半衰期（月）","记忆权重每经过这些月数衰减一半，数值越大衰退越慢。":"记忆权重每经过这些月数衰减一半，数值越大衰退越慢。","知识库文件":"知识库文件","选择 UTF-8 TXT 或 Markdown 文件，最大 1 MiB。导入的是内容快照，修改原文件后请重新导入。":"选择 UTF-8 TXT 或 Markdown 文件，最大 1 MiB。导入的是内容快照，修改原文件后请重新导入。","每次使用的知识条数":"每次使用的知识条数","根据用户问题做简单关键词检索。":"根据用户问题做简单关键词检索。","命令前缀":"命令前缀","例如 /dsh；不能包含空格。":"例如 /dsh；不能包含空格。","会话映射文件":"会话映射文件","默认自动保存到工作目录；通常无需修改。":"默认自动保存到工作目录；通常无需修改。","记忆存储文件":"记忆存储文件","Agent 预设":"Agent 预设","从 DSH 已配置的预设中选择。":"从 DSH 已配置的预设中选择。","模型供应商":"模型供应商","跟随默认时，在会话创建或恢复时读取 DSH 默认模型及推理等级。":"跟随默认时，在会话创建或恢复时读取 DSH 默认模型及推理等级。","模型":"模型","保存后的模型选择会用于新会话和恢复的旧会话；显式指定模型时使用该模型默认推理等级。":"保存后的模型选择会用于新会话和恢复的旧会话；显式指定模型时使用该模型默认推理等级。","Token 环境变量（兼容）":"Token 环境变量（兼容）","仅未填写 Bot Token 时使用。变量应在 DSH 启动前设置。":"仅未填写 Bot Token 时使用。变量应在 DSH 启动前设置。","工作目录必须是 DSH 主机上的绝对路径。":"工作目录必须是 DSH 主机上的绝对路径。","请至少填写一个允许的用户 ID。":"请至少填写一个允许的用户 ID。","用户和频道 ID 必须仅包含数字。":"用户和频道 ID 必须仅包含数字。","命令前缀不能为空或包含空格。":"命令前缀不能为空或包含空格。","请填写会话映射文件路径。":"请填写会话映射文件路径。","供应商和模型名称必须一起填写或一起留空。":"供应商和模型名称必须一起填写或一起留空。","记忆和知识库限制必须是有效整数。":"记忆和知识库限制必须是有效整数。","启用配对审批时，请填写主人的 KOOK 用户 ID。":"启用配对审批时，请填写主人的 KOOK 用户 ID。","记忆条数最多 50，半衰期最多 120 个月，知识条数最多 20。":"记忆条数最多 50，半衰期最多 120 个月，知识条数最多 20。","无法打开系统目录选择器，请使用目录浏览。":"无法打开系统目录选择器，请使用目录浏览。","请选择不超过 1 MiB 的 UTF-8 TXT 或 Markdown 文件。":"请选择不超过 1 MiB 的 UTF-8 TXT 或 Markdown 文件。","知识文件已读入，保存设置后生效。":"知识文件已读入，保存设置后生效。","文件为空或不是有效的 UTF-8 文本，请转换编码后重试。":"文件为空或不是有效的 UTF-8 文本，请转换编码后重试。","保存未被接受，可能是配置已被其他页面修改。请重新载入后检查并保存。":"保存未被接受，可能是配置已被其他页面修改。请重新载入后检查并保存。","设置已保存，KOOK 连接将应用新配置。":"设置已保存，KOOK 连接将应用新配置。","保存失败，请检查 DSH 连接后重试。":"保存失败，请检查 DSH 连接后重试。","正在读取 KOOK 设置…":"正在读取 KOOK 设置…","KOOK 配置尚不可用。请确认 KOOK 主机插件已启用且配置条目 ID 为 kook。":"KOOK 配置尚不可用。请确认 KOOK 主机插件已启用且配置条目 ID 为 kook。","请选择模型":"请选择模型","跟随 DSH 默认":"跟随 DSH 默认","当前已保存选项（暂不可用）":"当前已保存选项（暂不可用）","（不可用）":"（不可用）","尚未选择":"尚未选择","选择保存目录":"选择保存目录","选择目录":"选择目录","文件名":"文件名","恢复默认位置":"恢复默认位置","正在读取…":"正在读取…","已导入：{name}":"已导入：{name}","使用先前配置的主机知识文件":"使用先前配置的主机知识文件","尚未导入文件":"尚未导入文件","移除知识库":"移除知识库","KOOK 机器人":"KOOK 机器人","配置机器人连接、访问权限与对话方式。":"配置机器人连接、访问权限与对话方式。","当前 DSH 配置只读，无法保存修改。":"当前 DSH 配置只读，无法保存修改。","配置已在其他位置更新。请重新载入后再编辑。":"配置已在其他位置更新。请重新载入后再编辑。","机器人连接":"机器人连接","已保存 Token 覆盖值，可能包括主动停用时保存的空值；此状态不代表机器人已连接。":"已保存 Token 覆盖值，可能包括主动停用时保存的空值；此状态不代表机器人已连接。","未保存 Token 覆盖值，将尝试使用主机环境变量。":"未保存 Token 覆盖值，将尝试使用主机环境变量。","Token 高级操作":"Token 高级操作","以下操作在保存设置后生效。清除 Token 会停用连接。":"以下操作在保存设置后生效。清除 Token 会停用连接。","清除 Token 并停用连接":"清除 Token 并停用连接","改用环境变量":"改用环境变量","保存后清除 Token 并停止连接。":"保存后清除 Token 并停止连接。","保存后移除 Token 覆盖，使用环境变量。":"保存后移除 Token 覆盖，使用环境变量。","访问权限":"访问权限","模型与对话":"模型与对话","正在读取 DSH 可选项…":"正在读取 DSH 可选项…","部分模型列表不可用，请检查 DSH 模型配置后刷新。已保存的选择会保留。":"部分模型列表不可用，请检查 DSH 模型配置后刷新。已保存的选择会保留。","预设列表不可用，请检查 DSH 预设服务。":"预设列表不可用，请检查 DSH 预设服务。","刷新可选项":"刷新可选项","图片使用":"图片使用","私聊可直接发图。要指定问题，先发送 /image <问题>，再在两分钟内发图。":"私聊可直接发图。要指定问题，先发送 /image <问题>，再在两分钟内发图。","频道关闭自动转发时，先发送以下命令，再由同一账号在同一频道发图：":"频道关闭自动转发时，先发送以下命令，再由同一账号在同一频道发图：","{prefix} /image 请分析这张截图。":"{prefix} /image 请分析这张截图。","看图需要支持图片的模型。支持 PNG、JPEG、WebP、GIF，单张最多 8 MiB，并受 DSH 图片限制。":"看图需要支持图片的模型。支持 PNG、JPEG、WebP、GIF，单张最多 8 MiB，并受 DSH 图片限制。","需要图片回复时，可以要求机器人把工作目录内已有的图片发到当前聊天。":"需要图片回复时，可以要求机器人把工作目录内已有的图片发到当前聊天。","记忆与知识库":"记忆与知识库","配对与高级设置":"配对与高级设置","选择 DSH 主机目录":"选择 DSH 主机目录","正在加载目录…":"正在加载目录…","无法读取目录，请检查主机目录浏览服务或重试。":"无法读取目录，请检查主机目录浏览服务或重试。","主目录":"主目录","目录层级":"目录层级","目录较多，列表仅显示部分内容。":"目录较多，列表仅显示部分内容。","使用此目录":"使用此目录","取消":"取消","保存会重连机器人并停止当前 KOOK 任务，请等回答结束后再保存。":"保存会重连机器人并停止当前 KOOK 任务，请等回答结束后再保存。","正在保存…":"正在保存…","保存设置":"保存设置","重新载入 / 放弃修改":"重新载入 / 放弃修改","KOOK":"KOOK","日常配置已移至左下角账号菜单中的“设置 → KOOK”。":"日常配置已移至左下角账号菜单中的“设置 → KOOK”。","在设置中管理机器人连接、权限、模型和图片对话。本页保留启用、停用和版本管理。":"在设置中管理机器人连接、权限、模型和图片对话。本页保留启用、停用和版本管理。"},"en":{"输入新 Token 以替换；留空保留现有 Token。已保存的 Token 不会回显。":"Enter a new Token to replace it, or leave blank to keep the current Token. Saved Tokens are never shown.","工作目录":"Workspace","选择运行任务的目录。浏览的是 DSH 主机上的文件夹。":"Choose the directory for running tasks. These folders are on the DSH host.","允许的用户 ID":"Allowed user IDs","必填；每行一个 ID，也可用逗号分隔。只有这些用户能调用机器人。":"Required. Enter one ID per line or separate them with commas. Only these users can use the bot.","允许的频道 ID":"Allowed channel IDs","每行一个 ID，也可用逗号分隔。留空禁用频道消息，私聊由下方开关控制。":"Enter one ID per line or separate them with commas. Leave blank to disable channel messages; private messages use the switch below.","允许私聊":"Allow private messages","私聊仍受用户白名单限制。":"Private messages still require an allowed user.","自动转发频道消息":"Forward channel messages automatically","开启后，白名单频道中的普通消息会自动进入 DSH；关闭时频道需使用命令前缀。":"When enabled, ordinary messages in allowed channels go to DSH automatically. Otherwise, use the command prefix.","陌生人配对审批":"Require pairing approval for new users","陌生人私聊先收到配对码，主人批准后才能使用。":"New users receive a pairing code in private messages and must be approved by the owner before using the bot.","主人 KOOK 用户 ID":"Owner's KOOK user ID","用于接收陌生人配对请求和批准通知。":"Receives pairing requests and approval notifications for new users.","机器人性格设定":"Bot personality","描述长期人格、语气、边界和回答风格。":"Describe the bot's ongoing personality, tone, boundaries and response style.","每次使用的记忆条数":"Memories per request","按用户独立保存；数值越大，模型看到的记忆越多。":"Saved separately for each user. Higher values give the model more memories.","记忆半衰期（月）":"Memory half-life (months)","记忆权重每经过这些月数衰减一半，数值越大衰退越慢。":"Memory weight halves after this many months. Higher values make memories fade more slowly.","知识库文件":"Knowledge file","选择 UTF-8 TXT 或 Markdown 文件，最大 1 MiB。导入的是内容快照，修改原文件后请重新导入。":"Choose a UTF-8 TXT or Markdown file up to 1 MiB. The imported content is a snapshot; import again after changing the original.","每次使用的知识条数":"Knowledge entries per request","根据用户问题做简单关键词检索。":"Uses simple keyword matching against the user's question.","命令前缀":"Command prefix","例如 /dsh；不能包含空格。":"For example, /dsh. Spaces are not allowed.","会话映射文件":"Session mapping file","默认自动保存到工作目录；通常无需修改。":"Saved in the workspace by default. Usually no changes are needed.","记忆存储文件":"Memory storage file","Agent 预设":"Agent preset","从 DSH 已配置的预设中选择。":"Choose from the presets configured in DSH.","模型供应商":"Model provider","跟随默认时，在会话创建或恢复时读取 DSH 默认模型及推理等级。":"When following defaults, new and resumed sessions use the DSH default model and reasoning level.","模型":"Model","保存后的模型选择会用于新会话和恢复的旧会话；显式指定模型时使用该模型默认推理等级。":"The saved selection applies to new and resumed sessions. An explicitly selected model uses its default reasoning level.","Token 环境变量（兼容）":"Token environment variable (legacy)","仅未填写 Bot Token 时使用。变量应在 DSH 启动前设置。":"Used only when no Bot Token is configured. Set the variable before starting DSH.","工作目录必须是 DSH 主机上的绝对路径。":"The workspace must be an absolute path on the DSH host.","请至少填写一个允许的用户 ID。":"Enter at least one allowed user ID.","用户和频道 ID 必须仅包含数字。":"User and channel IDs must contain digits only.","命令前缀不能为空或包含空格。":"The command prefix cannot be empty or contain spaces.","请填写会话映射文件路径。":"Enter a path for the session mapping file.","供应商和模型名称必须一起填写或一起留空。":"Specify both the provider and model name, or leave both blank.","记忆和知识库限制必须是有效整数。":"Memory and knowledge limits must be valid integers.","启用配对审批时，请填写主人的 KOOK 用户 ID。":"Enter the owner's KOOK user ID to enable pairing approval.","记忆条数最多 50，半衰期最多 120 个月，知识条数最多 20。":"Limits: 50 memories, a 120-month half-life and 20 knowledge entries.","无法打开系统目录选择器，请使用目录浏览。":"Could not open the system folder picker. Use the folder browser instead.","请选择不超过 1 MiB 的 UTF-8 TXT 或 Markdown 文件。":"Choose a UTF-8 TXT or Markdown file no larger than 1 MiB.","知识文件已读入，保存设置后生效。":"Knowledge file imported. Save settings to apply it.","文件为空或不是有效的 UTF-8 文本，请转换编码后重试。":"The file is empty or is not valid UTF-8 text. Convert its encoding and try again.","保存未被接受，可能是配置已被其他页面修改。请重新载入后检查并保存。":"Save was not accepted. Another page may have changed the settings. Reload, review and save again.","设置已保存，KOOK 连接将应用新配置。":"Settings saved. The KOOK connection will apply the new configuration.","保存失败，请检查 DSH 连接后重试。":"Save failed. Check the DSH connection and try again.","正在读取 KOOK 设置…":"Loading KOOK settings…","KOOK 配置尚不可用。请确认 KOOK 主机插件已启用且配置条目 ID 为 kook。":"KOOK settings are unavailable. Make sure the KOOK host plugin is enabled and its configuration entry ID is kook.","请选择模型":"Choose a model","跟随 DSH 默认":"Use DSH defaults","当前已保存选项（暂不可用）":"Saved selection (currently unavailable)","（不可用）":" (unavailable)","尚未选择":"Not selected","选择保存目录":"Choose save folder","选择目录":"Choose folder","文件名":"File name","恢复默认位置":"Restore default location","正在读取…":"Loading…","已导入：{name}":"Imported: {name}","使用先前配置的主机知识文件":"Using the previously configured knowledge file on the host","尚未导入文件":"No file imported","移除知识库":"Remove knowledge file","KOOK 机器人":"KOOK bot","配置机器人连接、访问权限与对话方式。":"Configure the bot connection, access and conversations.","当前 DSH 配置只读，无法保存修改。":"DSH settings are read-only. Changes cannot be saved.","配置已在其他位置更新。请重新载入后再编辑。":"Settings changed elsewhere. Reload before editing.","机器人连接":"Bot connection","已保存 Token 覆盖值，可能包括主动停用时保存的空值；此状态不代表机器人已连接。":"A Token override is saved, possibly an empty value saved to disable the bot. This does not mean the bot is connected.","未保存 Token 覆盖值，将尝试使用主机环境变量。":"No Token override is saved. The host environment variable will be tried.","Token 高级操作":"Advanced Token options","以下操作在保存设置后生效。清除 Token 会停用连接。":"These actions take effect when you save settings. Clearing the Token disables the connection.","清除 Token 并停用连接":"Clear Token and disable connection","改用环境变量":"Use environment variable","保存后清除 Token 并停止连接。":"Saving will clear the Token and stop the connection.","保存后移除 Token 覆盖，使用环境变量。":"Saving will remove the Token override and use the environment variable.","访问权限":"Access","模型与对话":"Model and conversations","正在读取 DSH 可选项…":"Loading DSH options…","部分模型列表不可用，请检查 DSH 模型配置后刷新。已保存的选择会保留。":"Some model lists are unavailable. Check DSH model settings and refresh. Your saved selection will be kept.","预设列表不可用，请检查 DSH 预设服务。":"The preset list is unavailable. Check the DSH preset service.","刷新可选项":"Refresh options","图片使用":"Using images","私聊可直接发图。要指定问题，先发送 /image <问题>，再在两分钟内发图。":"Send images directly in private messages. To ask a specific question, send /image <question>, then send the image within two minutes.","频道关闭自动转发时，先发送以下命令，再由同一账号在同一频道发图：":"When automatic forwarding is off, send this command first, then send the image from the same account in the same channel:","{prefix} /image 请分析这张截图。":"{prefix} /image Please analyze this screenshot.","看图需要支持图片的模型。支持 PNG、JPEG、WebP、GIF，单张最多 8 MiB，并受 DSH 图片限制。":"Image input requires a compatible model. PNG, JPEG, WebP and GIF are supported, up to 8 MiB each, subject to DSH image limits.","需要图片回复时，可以要求机器人把工作目录内已有的图片发到当前聊天。":"To receive an image reply, ask the bot to send an existing image from the workspace to the current chat.","记忆与知识库":"Memory and knowledge","配对与高级设置":"Pairing and advanced settings","选择 DSH 主机目录":"Choose a folder on the DSH host","正在加载目录…":"Loading folders…","无法读取目录，请检查主机目录浏览服务或重试。":"Could not read the folder. Check the host folder browser service or try again.","主目录":"Home folder","目录层级":"Folder hierarchy","目录较多，列表仅显示部分内容。":"Only some entries are shown because this folder contains many items.","使用此目录":"Use this folder","取消":"Cancel","保存会重连机器人并停止当前 KOOK 任务，请等回答结束后再保存。":"Saving reconnects the bot and stops current KOOK tasks. Wait for the reply to finish before saving.","正在保存…":"Saving…","保存设置":"Save settings","重新载入 / 放弃修改":"Reload / discard changes","KOOK":"KOOK","日常配置已移至左下角账号菜单中的“设置 → KOOK”。":"Everyday settings have moved to Settings → KOOK in the account menu at the bottom left.","在设置中管理机器人连接、权限、模型和图片对话。本页保留启用、停用和版本管理。":"Manage the bot connection, access, models and image conversations in Settings. Use this page to enable, disable and manage versions."}};
     // This source is the body of a DSH ModuleLoader factory; build with node scripts/build-client.mjs.
     const React = require('react');
-    const { createElement: h, useState, useEffect, useCallback, useSyncExternalStore, useId } = React;
+    const { createElement: h, useState, useEffect, useCallback, useSyncExternalStore, useId, useRef } = React;
     const fields = [
       ['token', 'Bot Token', 'password', '输入新 Token 以替换；留空保留现有 Token。已保存的 Token 不会回显。'],
       ['workspace', '工作目录', 'directory', '选择运行任务的目录。浏览的是 DSH 主机上的文件夹。'],
@@ -50,8 +51,73 @@ window.__ModuleLoader__.load({
       if (value.memoryLimit > 50 || value.memoryHalfLifeMonths > 120 || value.knowledgeLimit > 20) throw Error('记忆条数最多 50，半衰期最多 120 个月，知识条数最多 20。');
       return { ...value, knowledgeText: draft.knowledgeText, knowledgeName: draft.knowledgeName };
     }
-    const inputStyle = { display: 'block', width: '100%', boxSizing: 'border-box', padding: '8px 10px', border: '1px solid var(--border-color, #8886)', borderRadius: 6, background: 'transparent', color: 'inherit', font: 'inherit' };
-    function KookSettings({ form, mirror, remote, workspace }) {
+    function buildConfigOps(values, tokenAction) {
+      const optional = new Set(['agentPreset', 'provider', 'model', 'tokenEnv']);
+      const ops = Object.entries(values).filter(([key]) => key !== 'token').map(([key, value]) => optional.has(key) && value === ''
+        ? { op: 'unset', path: [key] } : { op: 'set', path: [key], value });
+      if (values.token) ops.push({ op: 'set', path: ['token'], value: values.token });
+      else if (tokenAction === 'disable') ops.push({ op: 'set', path: ['token'], value: '' });
+      else if (tokenAction === 'environment') ops.push({ op: 'unset', path: ['token'] });
+      return ops;
+    }
+    const settingsCss = `
+    .kook-settings{width:100%;max-width:760px;box-sizing:border-box;color:var(--dsw-alias-label-primary);padding:4px 0 0;font-size:14px;line-height:1.5}
+    .kook-settings *{box-sizing:border-box}
+    .kook-settings h2{font-size:22px;line-height:1.3;margin:0 0 6px;font-weight:650}
+    .kook-settings h3{font-size:15px;margin:0;font-weight:600}
+    .kook-settings p{margin:0}
+    .kook-settings .kook-intro,.kook-settings .kook-hint{color:var(--dsw-alias-label-secondary);font-size:12px}
+    .kook-settings .kook-intro{font-size:13px;margin-bottom:20px}
+    .kook-settings .kook-section{margin:0 0 16px;padding:18px;border:1px solid var(--dsw-alias-border-l1);border-radius:12px;background:var(--dsw-alias-bg-layer-1)}
+    .kook-settings .kook-section>h3{margin-bottom:16px}
+    .kook-settings .kook-field{min-width:0;margin-bottom:16px}
+    .kook-settings .kook-field:last-child{margin-bottom:0}
+    .kook-settings .kook-label{display:block;font-weight:500;margin-bottom:7px}
+    .kook-settings .kook-hint{margin-top:6px;overflow-wrap:anywhere}
+    .kook-settings input:not([type=checkbox]):not([type=file]),.kook-settings select,.kook-settings textarea,.kook-settings output{display:block;width:100%;min-width:0;height:40px;padding:8px 11px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font:inherit}
+    .kook-settings textarea{height:auto;resize:vertical;min-height:72px}
+    .kook-settings select{padding-right:28px}
+    .kook-settings output{height:auto;min-height:40px;overflow-wrap:anywhere}
+    .kook-settings input[type=file]{display:block;width:100%;max-width:100%;font:inherit;color:var(--dsw-alias-label-secondary)}
+    .kook-settings button,.kook-settings input[type=file]::file-selector-button{height:36px;padding:0 12px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+    .kook-settings button:hover:not(:disabled){background:var(--dsw-alias-bg-layer-2)}
+    .kook-settings :is(button,input,select,textarea,summary):focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:3px}
+    .kook-settings :disabled{opacity:.5;cursor:not-allowed}
+    .kook-settings .kook-primary{border-color:var(--dsw-alias-brand-primary);color:var(--dsw-alias-brand-primary);font-weight:600}
+    .kook-settings .kook-danger{color:var(--dsw-alias-state-error-primary)}
+    .kook-settings .kook-row{display:flex;align-items:center;gap:10px;min-width:0}
+    .kook-settings .kook-row>output{flex:1}
+    .kook-settings .kook-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .kook-settings .kook-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px}
+    .kook-settings .kook-switch{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:10px 0;border-top:1px solid var(--dsw-alias-border-l1)}
+    .kook-settings .kook-switch .kook-label{margin:0}
+    .kook-settings .kook-switch .kook-hint{margin-top:3px}
+    .kook-settings input[type=checkbox]{appearance:auto;width:18px;height:18px;flex-shrink:0;margin:0;accent-color:var(--dsw-alias-brand-primary);cursor:pointer}
+    .kook-settings details.kook-section{padding:0}
+    .kook-settings summary{cursor:pointer;list-style-position:inside;font-weight:600;padding:16px 18px}
+    .kook-settings details[open]>summary{border-bottom:1px solid var(--dsw-alias-border-l1)}
+    .kook-settings .kook-details-body{padding:16px 18px}
+    .kook-settings .kook-details-body>p+p{margin-top:10px}
+    .kook-settings .kook-token-actions{margin-top:12px;border-top:1px solid var(--dsw-alias-border-l1)}
+    .kook-settings .kook-token-actions>summary{padding:10px 0;font-size:12px;color:var(--dsw-alias-label-secondary)}
+    .kook-settings .kook-note{padding:10px 12px;border:1px solid var(--dsw-alias-border-l1);border-radius:8px;font-size:12px;margin:10px 0;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-layer-2)}
+    .kook-settings .kook-error{color:var(--dsw-alias-state-error-primary)}
+    .kook-settings .kook-success{color:var(--dsw-alias-state-success-primary)}
+    .kook-settings .kook-warning{color:var(--dsw-alias-state-warn-primary)}
+    .kook-settings .kook-browser{border:1px solid var(--dsw-alias-border-l2);padding:16px;border-radius:10px;margin:16px 0;background:var(--dsw-alias-bg-layer-2)}
+    .kook-settings .kook-browser nav{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+    .kook-settings .kook-browser nav button{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+    .kook-settings .kook-browser ul{list-style:none;margin:12px 0;padding:0;max-height:240px;overflow:auto}
+    .kook-settings .kook-browser li+li{margin-top:4px}
+    .kook-settings .kook-browser li button{width:100%;text-align:left;overflow:hidden;text-overflow:ellipsis}
+    .kook-settings .kook-footer{position:sticky;bottom:0;z-index:1;padding:14px 0;margin-top:20px;border-top:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-base)}
+    .kook-settings .kook-footer .kook-hint{margin:0 0 10px}
+    @media(max-width:580px){.kook-settings .kook-grid{grid-template-columns:1fr}.kook-settings .kook-section{padding:14px}.kook-settings .kook-details-body{padding:14px}.kook-settings .kook-footer .kook-actions{gap:6px}}
+    `;
+    function KookSettings({ form, mirror, remote, workspace, locale, t = (text, params = {}) => text.replace(/\{(\w+)\}/g, (match, key) => params[key] ?? match) }) {
+      const localeSubscribe = useCallback(listener => locale ? locale.subscribe(listener) : () => {}, [locale]);
+      const localeSnapshot = useCallback(() => locale ? locale.getSnapshot() : '', [locale]);
+      useSyncExternalStore(localeSubscribe, localeSnapshot, localeSnapshot);
       const mirrorSubscribe = useCallback(listener => mirror.subscribe(listener), [mirror]);
       const mirrorSnapshot = useCallback(() => mirror.getSnapshot(), [mirror]);
       const described = useSyncExternalStore(mirrorSubscribe, mirrorSnapshot, mirrorSnapshot);
@@ -69,6 +135,12 @@ window.__ModuleLoader__.load({
       const id = useId();
       const [catalog, setCatalog] = useState({ groups: [], presets: [], loading: true, modelError: false, presetError: false });
       const [browser, setBrowser] = useState(null);
+      const browserRef = useRef(null);
+      const browserTrigger = useRef(null);
+      const closeBrowser = () => { setBrowser(null); browserTrigger.current?.focus(); };
+      useEffect(() => {
+        if (browser?.key) { browserRef.current?.focus(); browserRef.current?.scrollIntoView({ block: 'nearest' }); }
+      }, [browser?.key]);
       const [importing, setImporting] = useState(false);
       const update = (key, value) => { setDraft(previous => ({ ...previous, [key]: value })); setDirty(true); setNotice(''); };
       async function loadOptions() {
@@ -102,7 +174,7 @@ window.__ModuleLoader__.load({
           const name = draft[key].split(/[\\/]/).pop() || (key === 'memoryFile' ? 'memories.json' : 'routes.json');
           update(key, path.replace(/[\\/]$/, '') + '/' + name);
         }
-        setBrowser(null);
+        closeBrowser();
       }
       async function importKnowledge(event) {
         const file = event.target.files?.[0];
@@ -131,110 +203,148 @@ window.__ModuleLoader__.load({
         try { values = parseDraft(draft); } catch (error) { setError(error.message); return; }
         setSaving(true);
         try {
-          // Empty optional values remove the override, preserving Host/environment fallback semantics.
-          const optional = new Set(['agentPreset', 'provider', 'model', 'tokenEnv']);
-          const ops = Object.entries(values).filter(([key]) => key !== 'token').map(([key, value]) => optional.has(key) && value === ''
-            ? { op: 'unset', path: [key] } : { op: 'set', path: [key], value });
-          if (values.token) ops.push({ op: 'set', path: ['token'], value: values.token });
-          else if (tokenAction === 'disable') ops.push({ op: 'set', path: ['token'], value: '' });
-          else if (tokenAction === 'environment') ops.push({ op: 'unset', path: ['token'] });
+          const ops = buildConfigOps(values, tokenAction);
           const accepted = await form.mutate(ops, revision);
           if (!accepted) { setError('保存未被接受，可能是配置已被其他页面修改。请重新载入后检查并保存。'); return; }
-          setDraft(previous => ({ ...previous, token: '' }));
+          const saved = form.getSnapshot();
+          if (saved.status === 'ready') { setDraft(toDraft(saved.value)); setRevision(saved.revision); }
+          else setDraft(previous => ({ ...previous, token: '' }));
           setDirty(false); setTokenAction('keep'); setNotice('设置已保存，KOOK 连接将应用新配置。');
         } catch { setError('保存失败，请检查 DSH 连接后重试。'); }
         finally { setSaving(false); }
       }
-      if (state.status === 'loading') return h('p', { role: 'status' }, '正在读取 KOOK 设置…');
-      if (state.status !== 'ready') return h('p', { role: 'alert' }, 'KOOK 配置尚不可用。请确认 KOOK 主机插件已启用且配置条目 ID 为 kook。');
+      const wrap = content => h('div', { className: 'kook-settings' }, h('style', null, settingsCss), content);
+      if (state.status === 'loading') return wrap(h('p', { role: 'status', className: 'kook-intro' }, t('正在读取 KOOK 设置…')));
+      if (state.status !== 'ready') return wrap(h('p', { role: 'alert', className: 'kook-error' }, t('KOOK 配置尚不可用。请确认 KOOK 主机插件已启用且配置条目 ID 为 kook。')));
       const disabled = saving || importing || !state.writable;
       function field([key, label, type, hint]) {
         const fieldId = `${id}-${key}`;
-        const props = { id: fieldId, name: key, disabled, 'aria-describedby': `${fieldId}-hint`, onChange: event => { setDraft(previous => ({ ...previous, [key]: type === 'checkbox' ? event.target.checked : event.target.value })); setDirty(true); setNotice(''); } };
+        const props = { id: fieldId, name: key, disabled, 'aria-describedby': `${fieldId}-hint`, onChange: event => update(key, type === 'checkbox' ? event.target.checked : event.target.value) };
+        const hintNode = h('div', { id: `${fieldId}-hint`, className: 'kook-hint' }, t(hint));
         let input;
+        if (type === 'checkbox') return h('div', { key, className: 'kook-switch' },
+          h('div', null, h('label', { htmlFor: fieldId, className: 'kook-label' }, t(label)), hintNode),
+          h('input', { ...props, type: 'checkbox', role: 'switch', checked: !!draft[key], 'aria-checked': !!draft[key] }));
         if (type === 'select') {
           const choices = key === 'provider' ? catalog.groups : key === 'model' ? (catalog.groups.find(group => group.id === draft.provider)?.models ?? []) : catalog.presets;
           const missing = draft[key] && !choices.some(item => item.id === draft[key]);
-          input = h('select', { ...props, value: draft[key], style: inputStyle, disabled: disabled || catalog.loading || (key === 'model' && !draft.provider),
+          input = h('select', { ...props, value: draft[key], disabled: disabled || catalog.loading || (key === 'model' && !draft.provider),
             onChange: event => {
-              if (key === 'provider') { setDraft(previous => ({ ...previous, provider: event.target.value, model: '' })); setDirty(true); }
+              if (key === 'provider') { setDraft(previous => ({ ...previous, provider: event.target.value, model: '' })); setDirty(true); setNotice(''); }
               else update(key, event.target.value);
-            } }, h('option', { value: '' }, key === 'model' && draft.provider ? '请选择模型' : '跟随 DSH 默认'),
-            missing && h('option', { value: draft[key], disabled: true }, '当前已保存选项（暂不可用）'),
-            ...choices.map(item => h('option', { key: item.id, value: item.id, disabled: !!item.broken }, (item.name || item.id) + (item.broken ? '（不可用）' : ''))));
+            } }, h('option', { value: '' }, t(key === 'model' && draft.provider ? '请选择模型' : '跟随 DSH 默认')),
+            missing && h('option', { value: draft[key], disabled: true }, t('当前已保存选项（暂不可用）')),
+            ...choices.map(item => h('option', { key: item.id, value: item.id, disabled: !!item.broken }, (item.name || item.id) + (item.broken ? t('（不可用）') : ''))));
         } else if (type === 'directory' || type === 'storage') {
           input = h('div', null,
-            h('div', { style: { display: 'flex', gap: 8, alignItems: 'center' } },
-              h('output', { id: fieldId, name: key, style: { ...inputStyle, overflowWrap: 'anywhere' } }, draft[key] || '尚未选择'),
-              h('button', { type: 'button', disabled, onClick: () => chooseDirectory(key) }, type === 'storage' ? '选择保存目录' : '选择目录')),
-            type === 'storage' && h('label', null, '文件名', h('input', { 'aria-label': label + '文件名', disabled, value: draft[key].split(/[\\/]/).pop(), onChange: event => {
-              const name = event.target.value;
-              if (/[\\/]/.test(name)) return;
-              update(key, draft[key].replace(/[^\\/]*$/, name));
-            }, style: inputStyle })),
-            type === 'storage' && h('button', { type: 'button', disabled, onClick: () => update(key, defaults[key]) }, '恢复默认位置'));
+            h('div', { className: 'kook-row' },
+              h('output', { id: fieldId, name: key }, draft[key] || t('尚未选择')),
+              h('button', { type: 'button', disabled, onClick: event => { browserTrigger.current = event.currentTarget; void chooseDirectory(key); } }, t(type === 'storage' ? '选择保存目录' : '选择目录'))),
+            type === 'storage' && h('div', { className: 'kook-field', style: { marginTop: 10 } },
+              h('label', { className: 'kook-label' }, t('文件名'), h('input', { 'aria-label': `${t(label)} · ${t('文件名')}`, disabled, value: draft[key].split(/[\\/]/).pop(), onChange: event => {
+                const name = event.target.value;
+                if (/[\\/]/.test(name)) return;
+                update(key, draft[key].replace(/[^\\/]*$/, name));
+              } }))),
+            type === 'storage' && h('button', { type: 'button', disabled, onClick: () => update(key, defaults[key]) }, t('恢复默认位置')));
         } else if (type === 'knowledge') {
           input = h('div', null, h('input', { id: fieldId, name: key, type: 'file', accept: '.txt,.md,.markdown,text/plain,text/markdown', disabled, onChange: importKnowledge }),
-            h('p', { role: 'status' }, importing ? '正在读取…' : draft.knowledgeName ? '已导入：' + draft.knowledgeName : draft.knowledgeFile ? '使用先前配置的主机知识文件' : '尚未导入文件'),
+            h('p', { role: 'status', className: 'kook-hint', style: { margin: '8px 0' } }, importing ? t('正在读取…') : draft.knowledgeName ? t('已导入：{name}', { name: draft.knowledgeName }) : t(draft.knowledgeFile ? '使用先前配置的主机知识文件' : '尚未导入文件')),
             h('button', { type: 'button', disabled: disabled || (!draft.knowledgeText && !draft.knowledgeFile), onClick: () => {
-              setDraft(previous => ({ ...previous, knowledgeFile: '', knowledgeName: '', knowledgeText: '' })); setDirty(true);
-            } }, '移除知识库'));
-        } else if (type === 'array' || type === 'textarea') input = h('textarea', { ...props, rows: type === 'textarea' ? 6 : 3, value: draft[key], style: inputStyle, spellCheck: false });
-        else input = h('input', { ...props, type, ...(type === 'checkbox' ? { checked: draft[key], role: 'switch' } : { value: draft[key], style: inputStyle, autoComplete: key === 'token' ? 'new-password' : 'off', spellCheck: false }),
+              setDraft(previous => ({ ...previous, knowledgeFile: '', knowledgeName: '', knowledgeText: '' })); setDirty(true); setNotice('');
+            } }, t('移除知识库')));
+        } else if (type === 'array' || type === 'textarea') input = h('textarea', { ...props, rows: type === 'textarea' ? 4 : 2, value: draft[key], spellCheck: false });
+        else input = h('input', { ...props, type, value: draft[key], autoComplete: key === 'token' ? 'new-password' : 'off', spellCheck: false,
           ...(type === 'number' ? { min: key === 'memoryHalfLifeMonths' ? 1 : 0, max: key === 'memoryLimit' ? 50 : key === 'memoryHalfLifeMonths' ? 120 : 20, step: 1 } : {}) });
-        return h('div', { key, style: { marginBottom: 18 } }, h('label', { htmlFor: fieldId, style: { display: 'block', fontWeight: 600, marginBottom: 5 } }, label), input,
-          h('div', { id: `${fieldId}-hint`, style: { fontSize: 12, opacity: .72, marginTop: 5 } }, hint));
+        return h('div', { key, className: 'kook-field' }, h('label', { htmlFor: fieldId, className: 'kook-label' }, t(label)), input, hintNode);
       }
-      return h('form', { onSubmit: save, style: { maxWidth: 720, padding: '16px 0' } },
-        h('h2', { style: { marginTop: 0 } }, 'KOOK 机器人'),
-        h('p', null, 'DSH rc.5 本地适配版。保存设置会重连机器人并停止当前 KOOK 任务，请等本轮回答结束后再保存。工作目录指向运行 DSH 的主机。'),
-        h('p', null, `图片：私聊可直接发图；频道关闭自动转发时，先发送 ${draft.commandPrefix || '/dsh'} /image <问题>，再在两分钟内发图。看图需选择支持图片的模型，单张最多 8 MiB，并受 DSH 限制。可要求机器人把工作目录内的图片发回当前聊天。`),
-        !state.writable && h('p', { role: 'status' }, '当前 DSH 配置只读，无法保存修改。'),
-        dirty && state.revision !== revision && h('p', { role: 'alert' }, '配置已在其他位置更新。请重新载入后再编辑。'),
-        h('p', { role: 'status' }, secretSet ? '已配置 Token 覆盖值（包括主动停用时保存的空值）；内容不会回显。' : '未保存 Token 覆盖值；兼容使用主机环境变量。'),
-        field(fields[0]),
-        h('div', { style: { display: 'flex', gap: 12, marginBottom: 18 } },
-          h('button', { type: 'button', disabled, onClick: () => { setTokenAction('disable'); setDraft(previous => ({ ...previous, token: '' })); setDirty(true); } }, '清除 Token 并停用连接'),
-          h('button', { type: 'button', disabled, onClick: () => { setTokenAction('environment'); setDraft(previous => ({ ...previous, token: '' })); setDirty(true); } }, '改用环境变量')),
-        tokenAction !== 'keep' && !draft.token && h('p', { role: 'status' }, tokenAction === 'disable' ? '保存后清除 Token 并停止连接。' : '保存后移除 Token 覆盖，使用环境变量。'),
-        ...[
-          ['连接与访问', ['workspace', 'allowedUsers', 'allowedChannels', 'allowPrivate', 'autoForwardChannels', 'commandPrefix']],
-          ['模型与 Agent', ['provider', 'model', 'agentPreset']],
-          ['人格与配对', ['personality', 'pairingEnabled', 'ownerUserId']],
-          ['记忆与知识库', ['memoryLimit', 'memoryHalfLifeMonths', 'knowledgeFile', 'knowledgeLimit']],
-        ].map(([title, keys]) => h('fieldset', { key: title, style: { border: '1px solid #8885', borderRadius: 8, padding: 16, marginBottom: 20 } },
-          h('legend', null, title), ...keys.map(key => field(fields.find(item => item[0] === key))),
-          title === '模型与 Agent' && h('div', null,
-            catalog.loading && h('p', { role: 'status' }, '正在读取 DSH 可选项…'),
-            catalog.modelError && h('p', { role: 'status' }, '部分模型列表不可用，请检查 DSH 模型配置后刷新。已保存的选择会保留。'),
-            catalog.presetError && h('p', { role: 'status' }, '预设列表不可用，请检查 DSH 预设服务。'),
-            h('button', { type: 'button', disabled: catalog.loading || disabled, onClick: loadOptions }, '刷新可选项')))),
-        h('details', null, h('summary', { style: { cursor: 'pointer', marginBottom: 12 } }, '高级存储与兼容设置'),
-          ...['stateFile', 'memoryFile', 'tokenEnv'].map(key => field(fields.find(item => item[0] === key)))),
-        browser && h('section', { role: 'dialog', 'aria-modal': false, 'aria-label': '选择目录', style: { border: '2px solid #8888', padding: 16, borderRadius: 8 } },
-          h('h3', null, '选择 DSH 主机目录'),
-          browser.loading && h('p', { role: 'status' }, '正在加载目录…'),
-          browser.error && h('p', { role: 'alert' }, '无法读取目录，请检查主机目录浏览服务或重试。'),
-          h('button', { type: 'button', disabled: browser.loading, onClick: () => browse(browser.key) }, '主目录'),
+      const renderFields = keys => keys.map(key => field(fields.find(item => item[0] === key)));
+      const section = (title, content) => h('section', { className: 'kook-section' }, h('h3', null, t(title)), content);
+      const folded = (title, content) => h('details', { className: 'kook-section' }, h('summary', null, t(title)), h('div', { className: 'kook-details-body' }, content));
+      const prefix = draft.commandPrefix || '/dsh';
+      return wrap(h('form', { onSubmit: save },
+        h('h2', null, t('KOOK 机器人')),
+        h('p', { className: 'kook-intro' }, t('配置机器人连接、访问权限与对话方式。')),
+        !state.writable && h('p', { role: 'status', className: 'kook-note kook-warning' }, t('当前 DSH 配置只读，无法保存修改。')),
+        dirty && state.revision !== revision && h('p', { role: 'alert', className: 'kook-note kook-error' }, t('配置已在其他位置更新。请重新载入后再编辑。')),
+        section('机器人连接', h(React.Fragment, null,
+          h('p', { role: 'status', className: 'kook-note' }, t(secretSet ? '已保存 Token 覆盖值，可能包括主动停用时保存的空值；此状态不代表机器人已连接。' : '未保存 Token 覆盖值，将尝试使用主机环境变量。')),
+          field(fields[0]),
+          ...renderFields(['workspace']),
+          h('details', { className: 'kook-token-actions' }, h('summary', null, t('Token 高级操作')),
+            h('p', { className: 'kook-hint', style: { marginBottom: 10 } }, t('以下操作在保存设置后生效。清除 Token 会停用连接。')),
+            h('div', { className: 'kook-actions' },
+              h('button', { type: 'button', className: 'kook-danger', disabled, onClick: () => { setTokenAction('disable'); setDraft(previous => ({ ...previous, token: '' })); setDirty(true); setNotice(''); } }, t('清除 Token 并停用连接')),
+              h('button', { type: 'button', disabled, onClick: () => { setTokenAction('environment'); setDraft(previous => ({ ...previous, token: '' })); setDirty(true); setNotice(''); } }, t('改用环境变量')))),
+          tokenAction !== 'keep' && !draft.token && h('p', { role: 'status', className: 'kook-note kook-warning' }, t(tokenAction === 'disable' ? '保存后清除 Token 并停止连接。' : '保存后移除 Token 覆盖，使用环境变量。')))),
+        section('访问权限', h(React.Fragment, null,
+          ...renderFields(['allowedUsers', 'allowedChannels', 'allowPrivate', 'autoForwardChannels']),
+          h('div', { style: { marginTop: 16 } }, ...renderFields(['commandPrefix'])))),
+        section('模型与对话', h(React.Fragment, null,
+          h('div', { className: 'kook-grid' }, ...renderFields(['provider', 'model'])),
+          ...renderFields(['agentPreset', 'personality']),
+          catalog.loading && h('p', { role: 'status', className: 'kook-hint' }, t('正在读取 DSH 可选项…')),
+          catalog.modelError && h('p', { role: 'status', className: 'kook-note kook-warning' }, t('部分模型列表不可用，请检查 DSH 模型配置后刷新。已保存的选择会保留。')),
+          catalog.presetError && h('p', { role: 'status', className: 'kook-note kook-warning' }, t('预设列表不可用，请检查 DSH 预设服务。')),
+          h('button', { type: 'button', disabled: catalog.loading || disabled, onClick: loadOptions }, t('刷新可选项')))),
+        folded('图片使用', h(React.Fragment, null,
+          h('p', null, t('私聊可直接发图。要指定问题，先发送 /image <问题>，再在两分钟内发图。')),
+          h('p', null, t('频道关闭自动转发时，先发送以下命令，再由同一账号在同一频道发图：')),
+          h('p', { className: 'kook-note' }, h('code', null, t('{prefix} /image 请分析这张截图。', { prefix }))),
+          h('p', { className: 'kook-hint' }, t('看图需要支持图片的模型。支持 PNG、JPEG、WebP、GIF，单张最多 8 MiB，并受 DSH 图片限制。')),
+          h('p', null, t('需要图片回复时，可以要求机器人把工作目录内已有的图片发到当前聊天。')))),
+        folded('记忆与知识库', h(React.Fragment, null,
+          h('div', { className: 'kook-grid' }, ...renderFields(['memoryLimit', 'memoryHalfLifeMonths'])),
+          ...renderFields(['knowledgeFile', 'knowledgeLimit']))),
+        folded('配对与高级设置', h(React.Fragment, null,
+          ...renderFields(['pairingEnabled']),
+          h('div', { style: { marginTop: 16 } }, ...renderFields(['ownerUserId', 'stateFile', 'memoryFile', 'tokenEnv'])))),
+        browser && h('section', { ref: browserRef, tabIndex: -1, onKeyDown: event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeBrowser(); } }, role: 'dialog', 'aria-modal': false, 'aria-label': t('选择目录'), className: 'kook-browser' },
+          h('h3', null, t('选择 DSH 主机目录')),
+          browser.loading && h('p', { role: 'status', className: 'kook-hint' }, t('正在加载目录…')),
+          browser.error && h('p', { role: 'alert', className: 'kook-error' }, t('无法读取目录，请检查主机目录浏览服务或重试。')),
+          h('button', { type: 'button', disabled: browser.loading, onClick: () => browse(browser.key) }, t('主目录')),
           browser.listing && h('div', null,
-            h('nav', { 'aria-label': '目录层级' }, ...browser.listing.crumbs.map(crumb => h('button', { type: 'button', key: crumb.path, onClick: () => browse(browser.key, crumb.path) }, crumb.name))),
-            h('p', null, browser.listing.path),
-            h('ul', { style: { maxHeight: 260, overflow: 'auto' } }, ...browser.listing.entries.map(entry => h('li', { key: entry.path },
-              h('button', { type: 'button', onClick: () => browse(browser.key, entry.path) }, entry.name)))),
-            browser.listing.truncated && h('p', null, '目录较多，列表仅显示部分内容。'),
-            h('button', { type: 'button', onClick: () => acceptDirectory(browser.key, browser.listing.path) }, '使用此目录')),
-          h('button', { type: 'button', onClick: () => setBrowser(null) }, '取消')),
-        error && h('p', { role: 'alert' }, error), notice && h('p', { role: 'status' }, notice),
-        h('div', { style: { display: 'flex', gap: 12 } },
-          h('button', { type: 'submit', disabled: disabled || !dirty || state.revision !== revision, style: { padding: '8px 16px', cursor: 'pointer' } }, saving ? '正在保存…' : '保存设置'),
-          h('button', { type: 'button', disabled: saving || importing, onClick: reset, style: { padding: '8px 16px', cursor: 'pointer' } }, '重新载入 / 放弃修改')));
+            h('nav', { 'aria-label': t('目录层级') }, ...browser.listing.crumbs.map(crumb => h('button', { type: 'button', key: crumb.path, disabled: browser.loading, onClick: () => browse(browser.key, crumb.path) }, crumb.name))),
+            h('p', { className: 'kook-hint' }, browser.listing.path),
+            h('ul', null, ...browser.listing.entries.map(entry => h('li', { key: entry.path }, h('button', { type: 'button', onClick: () => browse(browser.key, entry.path) }, entry.name)))),
+            browser.listing.truncated && h('p', { className: 'kook-hint' }, t('目录较多，列表仅显示部分内容。')),
+            h('div', { className: 'kook-actions' },
+              h('button', { type: 'button', className: 'kook-primary', onClick: () => acceptDirectory(browser.key, browser.listing.path) }, t('使用此目录')),
+              h('button', { type: 'button', onClick: closeBrowser }, t('取消')))),
+          !browser.listing && h('button', { type: 'button', onClick: closeBrowser }, t('取消'))),
+        h('div', { className: 'kook-footer' },
+          h('p', { className: 'kook-hint' }, t('保存会重连机器人并停止当前 KOOK 任务，请等回答结束后再保存。')),
+          error && h('p', { role: 'alert', className: 'kook-note kook-error' }, t(error)),
+          notice && h('p', { role: 'status', className: 'kook-note kook-success' }, t(notice)),
+          h('div', { className: 'kook-actions' },
+            h('button', { type: 'submit', className: 'kook-primary', disabled: disabled || !dirty || state.revision !== revision }, t(saving ? '正在保存…' : '保存设置')),
+            h('button', { type: 'button', disabled: saving || importing, onClick: reset }, t('重新载入 / 放弃修改'))))));
     }
-    exports.inject = ['slots', 'configForms', 'remote', 'remote.session', 'remote.agentPresets', 'uiWorkspace'];
+    exports.inject = ['slots', 'locale', 'configForms', 'remote', 'remote.session', 'remote.agentPresets', 'uiWorkspace'];
     exports.apply = function apply(ctx) {
+      ctx.effect(() => {
+        const disposers = [ctx.locale.register('kook-settings', 'zh', messages.zh),
+          ctx.locale.register('kook-settings', 'en', messages.en)];
+        return () => { for (const dispose of disposers) dispose(); };
+      });
+      const t = ctx.locale.bind('kook-settings');
+      const inject = () => ({ form: ctx.configForms.get('kook'), mirror: ctx.configForms.describe(),
+        remote: ctx.remote, workspace: ctx.uiWorkspace, locale: ctx.locale, t });
+      ctx.slots.inject('settings.section', () => ctx.slots.register({
+        name: 'settings.section', id: 'kook', order: 45, label: () => t('KOOK'), inject,
+      }, KookSettings));
+      function KookConfigNotice() {
+        useSyncExternalStore(useCallback(listener => ctx.locale.subscribe(listener), []),
+          useCallback(() => ctx.locale.getSnapshot(), []), useCallback(() => ctx.locale.getSnapshot(), []));
+        return h('div', { style: { padding: '16px 0', color: 'var(--dsw-alias-label-primary)' } },
+          h('p', { style: { margin: '0 0 6px', fontWeight: 600 } }, t('日常配置已移至左下角账号菜单中的“设置 → KOOK”。')),
+          h('p', { style: { margin: 0, color: 'var(--dsw-alias-label-secondary)', fontSize: 13 } },
+            t('在设置中管理机器人连接、权限、模型和图片对话。本页保留启用、停用和版本管理。')));
+      }
       ctx.slots.inject('plugins.bundle.config', () => ctx.slots.register({
         name: 'plugins.bundle.config', key: 'dsh-kook',
-        inject: () => ({ form: ctx.configForms.get('kook'), mirror: ctx.configForms.describe(), remote: ctx.remote, workspace: ctx.uiWorkspace }),
-      }, KookSettings));
+      }, KookConfigNotice));
     };
     
     return exports;

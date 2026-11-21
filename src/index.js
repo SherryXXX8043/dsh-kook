@@ -46,7 +46,7 @@ export function resolveConfig(config = {}, env = process.env) {
   return result;
 }
 
-/** Adapter for the public DSH 0.2.2-rc.3 Agent APIs. */
+/** Adapter for the public DSH 0.2.2-rc.5 Agent APIs. */
 export function createAgentAdapter(ctx, config, signal) {
   async function options() {
     const presets = ctx.get('agentPresets');
@@ -57,13 +57,20 @@ export function createAgentAdapter(ctx, config, signal) {
     if (!selection?.provider || !selection?.model) throw new KookError('MODEL_UNAVAILABLE');
     return {
       ...(signal ? { signal } : {}),
-      agentOptions: { provider: selection.provider, model: selection.model },
+      agentOptions: { provider: selection.provider, model: selection.model,
+        ...(selection.reasoningEffort === undefined ? {} : { reasoningEffort: selection.reasoningEffort }) },
       meta: { cwd: config.workspace, ...(presetId ? { agentPreset: presetId } : {}) },
       setup: async (agentCtx, agent) => {
         if (agent.session.header.cwd !== config.workspace) throw new KookError('WORKSPACE_CHANGED');
         const storedPreset = presets ? presets.presetForSession(agent.session) ?? undefined : agent.session.header.agentPreset;
         if (storedPreset !== presetId) throw new KookError('PRESET_CHANGED');
         if (presets) await step('PRESET_UNAVAILABLE', () => presets.mount(agentCtx, presetId));
+        // rc.5 resume preserves recorded selections; agentOptions alone is only a fallback.
+        // This handle is still unpublished, so selecting here cannot race with a running turn.
+        await step('MODEL_UNAVAILABLE', () => agent.model.select({
+          provider: selection.provider, model: selection.model,
+          ...(selection.reasoningEffort === undefined ? {} : { reasoningEffort: selection.reasoningEffort }),
+        }));
       },
     };
   }

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "KOOK bot (local rc.5 build)",
+    "description": "Connect KOOK private messages and allowed channels to local DSH 0.2.2-rc.5 over WebSocket. Configure the Bot Token, workspace and allowed users on this bundle's KOOK settings page. Locally modified from upstream 0.3.4; text replies only, approvals remain in DSH. Saving settings stops active KOOK tasks and reconnects the bot."
+  }
+}

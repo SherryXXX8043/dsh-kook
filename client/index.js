@@ -19,8 +19,8 @@ const fields = [
   ['stateFile', '会话映射文件', 'storage', '默认自动保存到工作目录；通常无需修改。'],
   ['memoryFile', '记忆存储文件', 'storage', '默认自动保存到工作目录；通常无需修改。'],
   ['agentPreset', 'Agent 预设', 'select', '从 DSH 已配置的预设中选择。'],
-  ['provider', '模型供应商', 'select', '选择供应商后，再选择模型；也可跟随 DSH 默认模型。'],
-  ['model', '模型', 'select', '可选项来自 DSH 模型列表。'],
+  ['provider', '模型供应商', 'select', '跟随默认时，在会话创建或恢复时读取 DSH 默认模型及推理等级。'],
+  ['model', '模型', 'select', '保存后的模型选择会用于新会话和恢复的旧会话；显式指定模型时使用该模型默认推理等级。'],
   ['tokenEnv', 'Token 环境变量（兼容）', 'text', '仅未填写 Bot Token 时使用。变量应在 DSH 启动前设置。'],
 ];
 const defaults = { token: '', workspace: '', allowedUsers: [], allowedChannels: [], allowPrivate: true, autoForwardChannels: false, pairingEnabled: false, ownerUserId: '', personality: '', memoryFile: '.dsh-kook/memories.json', memoryLimit: 8, memoryHalfLifeMonths: 6, knowledgeFile: '', knowledgeText: '', knowledgeName: '', knowledgeLimit: 5, commandPrefix: '/dsh', stateFile: '.dsh-kook/routes.json', agentPreset: '', provider: '', model: '', tokenEnv: 'KOOK_BOT_TOKEN' };
@@ -182,7 +182,7 @@ function KookSettings({ form, mirror, remote, workspace }) {
   }
   return h('form', { onSubmit: save, style: { maxWidth: 720, padding: '16px 0' } },
     h('h2', { style: { marginTop: 0 } }, 'KOOK 机器人'),
-    h('p', null, '保存后自动应用连接设置。工作目录和文件路径均指向运行 DSH 的主机。'),
+    h('p', null, 'DSH rc.5 本地适配版。保存设置会重连机器人并停止当前 KOOK 任务，请等本轮回答结束后再保存。工作目录指向运行 DSH 的主机。'),
     !state.writable && h('p', { role: 'status' }, '当前 DSH 配置只读，无法保存修改。'),
     dirty && state.revision !== revision && h('p', { role: 'alert' }, '配置已在其他位置更新。请重新载入后再编辑。'),
     h('p', { role: 'status' }, secretSet ? '已配置 Token 覆盖值（包括主动停用时保存的空值）；内容不会回显。' : '未保存 Token 覆盖值；兼容使用主机环境变量。'),

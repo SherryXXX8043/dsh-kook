@@ -2,3 +2,12 @@ node_modules/
 .npm-cache/
 .permission-recovery/
 *.tgz
+.env
+.env.*
+.dsh-kook/
+dist/
+*.log
+validation/packed/
+validation/*results*
+validation/diagnose-channel.cjs
+validation/local-changes.patch

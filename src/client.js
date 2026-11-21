@@ -188,6 +188,7 @@ window.__ModuleLoader__.load({
       return h('form', { onSubmit: save, style: { maxWidth: 720, padding: '16px 0' } },
         h('h2', { style: { marginTop: 0 } }, 'KOOK 机器人'),
         h('p', null, 'DSH rc.5 本地适配版。保存设置会重连机器人并停止当前 KOOK 任务，请等本轮回答结束后再保存。工作目录指向运行 DSH 的主机。'),
+        h('p', null, `图片：私聊可直接发图；频道关闭自动转发时，先发送 ${draft.commandPrefix || '/dsh'} /image <问题>，再在两分钟内发图。看图需选择支持图片的模型，单张最多 8 MiB，并受 DSH 限制。可要求机器人把工作目录内的图片发回当前聊天。`),
         !state.writable && h('p', { role: 'status' }, '当前 DSH 配置只读，无法保存修改。'),
         dirty && state.revision !== revision && h('p', { role: 'alert' }, '配置已在其他位置更新。请重新载入后再编辑。'),
         h('p', { role: 'status' }, secretSet ? '已配置 Token 覆盖值（包括主动停用时保存的空值）；内容不会回显。' : '未保存 Token 覆盖值；兼容使用主机环境变量。'),

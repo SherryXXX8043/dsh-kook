@@ -1,6 +1,6 @@
 {
   "name": "dsh-kook",
-  "version": "0.3.4-local.rc5.1",
+  "version": "0.3.4-local.rc5.3",
   "private": true,
   "description": "Connect local DeepSeek Harness agents to KOOK via WebSocket",
   "author": "lspbupt@sina.com",
@@ -11,10 +11,10 @@
   "type": "module",
   "main": "./src/index.js",
   "exports": { ".": "./src/index.js", "./client": "./src/client.js", "./package.json": "./package.json", "./cordis.patch.yml": "./cordis.patch.yml", "./locale/*.json": "./locale/*.json" },
-  "files": ["src", "client", "scripts/build-client.mjs", "cordis.patch.yml", "README.md", "LICENSE", "docs", "locale"],
+  "files": ["src", "client", "scripts", "cordis.patch.yml", "README.md", "LICENSE", "docs", "locale"],
   "engines": { "node": ">=24.9", "dsh": "0.2.2-rc.5" },
   "dsh": { "bundle": { "patch": "./cordis.patch.yml" }, "client": { "inject": ["@deepseek-ai/dsh-client-ui-settings", "@deepseek-ai/dsh-client-ui-plugin-manager", "@deepseek-ai/dsh-client-ui-workspace"], "platform": "web" } },
-  "scripts": { "build": "node scripts/build-client.mjs", "test": "node --test --test-isolation=none test/*.test.js", "check": "node --check src/index.js && node --check src/bridge.js && node --check src/transport.js && node --check src/client.js" },
+  "scripts": { "build": "node scripts/build-client.mjs", "test": "node --test --test-isolation=none test/*.test.js", "check": "node scripts/check.mjs" },
   "dependencies": { "@kookapp/js-sdk": "0.1.4" },
   "peerDependencies": { "@deepseek-ai/cordis": "~4.1.0", "@deepseek-ai/schemastery": "~3.19.0" },
   "devDependencies": { "@deepseek-ai/cordis": "~4.1.0", "@deepseek-ai/schemastery": "~3.19.0", "ws": "^8.18.3" }

@@ -15,6 +15,15 @@ const hints = {
   PAIRING_SAVE: '无法保存配对审批，请检查记忆存储目录权限和磁盘空间。',
   MESSAGE_SUBMIT: '向 DSH 提交消息失败，请查看该会话当前状态后重试。',
   SESSION_LIMIT: '活动会话已达到上限，请释放不用的会话后重试。',
+  IMAGE_URL: '图片地址不在支持的 KOOK 官方图片域名内；本次图片未提交。',
+  IMAGE_DOWNLOAD: '图片下载或保存失败，本次图片未提交。请检查连接后重新发送。',
+  IMAGE_TOO_LARGE: '图片超过限制。单张最多 8 MiB，并受 DSH 图片数量和总大小限制；请压缩后重发。',
+  IMAGE_FORMAT: '图片格式或内容校验失败。请使用有效的 PNG、JPEG、WebP 或 GIF，尺寸需符合 DSH 限制。',
+  IMAGE_UNAVAILABLE: 'DSH 图片附件服务不可用，请在本地检查插件依赖。',
+  IMAGE_BUSY: '当前图片处理请求较多，请稍后重试。',
+  IMAGE_PATH: '无法读取图片。请提供 KOOK 工作目录内可读的有效图片文件；不允许发送该目录以外的文件。',
+  IMAGE_ROUTE: '图片只能由当前插件管理的 KOOK 会话发送。',
+  IMAGE_SEND: '图片发送结果未确认，可能已经送达。请检查 KOOK 和本地记录，不要自动重发。',
   REQUEST_FAILED: '请求未完成，请根据错误编号查看本地 KOOK 插件日志。',
 };
 export class KookError extends Error {

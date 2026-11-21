@@ -7,6 +7,8 @@ import { KookBridge } from './bridge.js';
 import { KookError, step, reportFailure } from './errors.js';
 import { RouteStore } from './store.js';
 import { CompanionStore, readKnowledge } from './companion.js';
+import { KookImages } from './images.js';
+import { createImageTool } from './image-tool.js';
 
 export function configSnapshot(config = {}) {
   return Object.fromEntries(Object.entries(config).map(([key, value]) => [key,
@@ -99,7 +101,7 @@ export function createAgentAdapter(ctx, config, signal) {
 }
 
 export default class KookPlugin {
-  static inject = ['agents', 'agentDefaultModel', 'workspaceRegistry'];
+  static inject = ['agents', 'agentDefaultModel', 'workspaceRegistry', 'attachments', 'fs', 'tools'];
   static Config = z.object({
     token: z.string().role('secret').description('KOOK Bot Token；留空并保存可停止连接。').volatile(),
     workspace: z.string().description('工作目录：已存在目录的绝对路径。').volatile(),
@@ -177,9 +179,16 @@ export default class KookPlugin {
         try { await agents.attach(sessionId); }
         catch (error) { reportFailure(logger, error); }
       }
-      bridge = new KookBridge({ config, store, companion, knowledge, agents, send: (destination, text) => transport.send(destination, text), logger });
+      const images = new KookImages({ attachments: this.ctx.attachments, fs: this.ctx.fs,
+        workspace: config.workspace, signal: lifetime.signal });
+      bridge = new KookBridge({ config, store, companion, knowledge, agents, images, send: (destination, text) => transport.send(destination, text), logger });
+      const untool = this.ctx.tools.register(createImageTool({ bridge, images, transport, logger }), {
+        when: ({ agent }) => !bridge.stopped && bridge.destinations.has(agent.id) &&
+          [...bridge.handles.values()].some(handle => handle.agent === agent),
+      });
       const unlisten = this.ctx.on('session/event', (session, event) => bridge.onSessionEvent(session, event));
       this.runtime = { stop: async () => {
+        untool();
         unlisten();
         lifetime.abort();
         const stopping = bridge.stop();
